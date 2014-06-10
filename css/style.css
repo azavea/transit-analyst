@@ -1,0 +1,71 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+@font-face {
+  font-family: 'Edmondsans';
+  font-style: normal;
+  font-weight: normal;
+  src: url('../fonts/Edmondsans-Regular.otf')
+}
+
+body {
+  margin: 0;
+  background-color: #937019;
+  height: 100%;
+  overflow: hidden;
+}
+
+body, input, select {
+  font-family: 'Edmondsans', sans-serif;
+  font-size: 16px;
+}
+
+h1, h2, h3 {
+  width: 100%;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+}
+
+#box {
+  top: 10px;
+  right: 10px;
+  width: 450px;
+  max-height: calc(100% - 30px);
+  position: absolute;
+  background-color: white;
+  overflow-y: auto;
+}
+
+.container {
+  padding: 20px;
+}
+
+ul {
+  list-style-type: none;
+}
+
+#options {
+  width: 100%;
+}
+
+#options tr td:first-child {
+  text-align: left;
+}
+
+#options td {
+  padding: 5px;
+}
+
+#options tr td:last-child {
+  text-align: right;
+}
+
+#options input, #options select {
+  width: 100%;
+}
