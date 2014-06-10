@@ -82,23 +82,20 @@ d3.otpaGraphLine = function module() {
           var countMax = 0,
               secondsMax = 0;
 
-          var data = Object.keys(d.attributes).map(function(indicator) {
-            countMax = Math.max(countMax, d.attributes[indicator].count);
-            secondsMax = Math.max(secondsMax, Math.max.apply(Math, d.attributes[indicator].breaks));
-            counts.push(countFromSeconds(seconds, d.attributes[indicator]));
-            return {value: countFromSeconds(d.seconds, d.attributes[indicator]), total: d.attributes[indicator].count};
+          var indicators = d.attributes.indicators;
+          var data = Object.keys(indicators).map(function(indicator) {
+            countMax = Math.max(countMax, indicators[indicator].count);
+            secondsMax = Math.max(secondsMax, Math.max.apply(Math, indicators[indicator].breaks));
+            counts.push(countFromSeconds(seconds, indicators[indicator]));
+            return countsFromIndicator(indicators[indicator]);
           });
-
           x.domain([0, secondsMax]);
           y.domain([0, countMax]);
 
-
-          console.log(data);
-          // data.map(function(indicator) {
-          //   console.log(indicator)
-          //   var lastCount = indicator[indicator.length - 1].count;
-          //   indicator.push({seconds: secondsMax, count: lastCount});
-          // });
+          data.map(function(indicator) {
+            var lastCount = indicator[indicator.length - 1].count;
+            indicator.push({seconds: secondsMax, count: lastCount});
+          });
 
           return data;
         });

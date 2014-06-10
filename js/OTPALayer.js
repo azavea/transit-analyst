@@ -71,6 +71,7 @@ L.OTPALayer = L.FeatureGroup.extend({
   },
 
   setPointset: function (pointset) {
+    var self = this;
     self._pointset = pointset;
     // TODO: check if pointset is in self._pointsets
     self._getIndicator(self._surface.id, self._pointset);
