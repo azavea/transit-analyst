@@ -80,7 +80,7 @@
           var value = d3.select(this).property('value');
           range.value = value;
           d3.select('#minutes').html(value);
-          update(indicator, value * 60);
+          update(indicators, value * 60);
         });
 
       d3.select('#graph-type').selectAll('option')
@@ -119,25 +119,23 @@
           .attr('value', function(d) { return d.id; })
           .html(function(d) { return d.id; });
     }).on('change', function(e) {
-       indicators = e.data;
+      indicators = e.data;
 
       var indicatorKeys = Object.keys(indicators.features[0].properties.structured);
       var options = d3.select('#indicators').selectAll('option')
         .data(indicatorKeys, function(d) { return d; })
 
       options.enter()
-      .append('option')
-        .attr('value', function(d) { return d; })
-        .html(function(d) { return d; });
+        .append('option')
+          .attr('value', function(d) { return d; })
+          .html(function(d) { return d; });
+      options.exit().remove();
 
       update(indicators, range.value * 60);
     }).addTo(map);
 
     function update(data, seconds) {
-      // TODO: dropdown, with possitble structured objects
-      console.log(data.features[0])
       var attributes = data.features[0].properties.structured[indicator];
-
       d3.select('#graph').selectAll('.otpa-graph')
           .data([{seconds: seconds, attributes: attributes}])
           .call(otpaGraph);

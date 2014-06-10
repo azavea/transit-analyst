@@ -28,7 +28,7 @@ d3.otpaGraphLine = function module() {
 
   var line = d3.svg.line()
       .interpolate("simple")
-      .x(function(d) { return x(d.seconds);})
+      .x(function(d) { return x(d.seconds / 60);})
       .y(function(d) { return y(d.count); });
 
   function countsFromIndicator(indicator) {
@@ -82,14 +82,14 @@ d3.otpaGraphLine = function module() {
           var countMax = 0,
               secondsMax = 0;
 
-          var indicators = d.attributes.indicators;
+          var indicators = d.attributes;
           var data = Object.keys(indicators).map(function(indicator) {
-            countMax = Math.max(countMax, indicators[indicator].count);
+            countMax = Math.max(countMax, d.attributes[indicator].count);
             secondsMax = Math.max(secondsMax, Math.max.apply(Math, indicators[indicator].breaks));
             counts.push(countFromSeconds(seconds, indicators[indicator]));
             return countsFromIndicator(indicators[indicator]);
           });
-          x.domain([0, secondsMax]);
+          x.domain([0, secondsMax / 60]);
           y.domain([0, countMax]);
 
           data.map(function(indicator) {
@@ -129,7 +129,7 @@ d3.otpaGraphLine = function module() {
 
     // Circles - update
     selection.selectAll('circle').data(counts)
-      .attr('cx', function (d) { return x(seconds); })
+      .attr('cx', function (d) { return x(seconds / 60); })
       .attr('cy', function(d) { return y(d) });
 
 

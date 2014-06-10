@@ -56,8 +56,15 @@ L.OTPALayer = L.FeatureGroup.extend({
       }
     }).addTo(map);
 
+    this._pointsetLayer = L.geoJson([], {
+      pointToLayer: function (feature, latlng) {
+          return L.circleMarker(latlng, self._pointsetStyle(feature.properties));
+      }
+    }).addTo(map);
+
     self.addLayer(this._locationLayer);
     self.addLayer(this._isochronesLayer);
+    self.addLayer(this._pointsetLayer);
 
     self._createSurface(self._location);
 
@@ -103,6 +110,17 @@ L.OTPALayer = L.FeatureGroup.extend({
     return style;
   },
 
+  _pointsetStyle: function(properties) {
+    return {
+      radius: 4,
+      fillColor: "black",
+      color: "#000",
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.8
+    };
+  },
+
   _createSurface: function(location) {
     var self = this;
     var path = 'surfaces?'
@@ -114,6 +132,7 @@ L.OTPALayer = L.FeatureGroup.extend({
         self._surface = json;
         if (self._pointset) {
           self._getIndicator(self._surface.id, self._pointset);
+          self._getPointset(self._pointset);
         }
         self._getIsochrones(self._surface.id);
       }
@@ -143,6 +162,15 @@ L.OTPALayer = L.FeatureGroup.extend({
   _getPointsets: function(callback) {
     var path = 'pointsets';
     this._getJSON(path, callback);
+  },
+
+  _getPointset: function(pointset) {
+    var self = this;
+    var path = 'pointsets/' + this._pointset;
+    this._getJSON(path, function(pointset) {
+      self._pointsetLayer.clearLayers();
+      self._pointsetLayer.addData(pointset.features);
+    });
   },
 
   _postJSON: function(path, callback) {
