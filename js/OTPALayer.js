@@ -9,7 +9,7 @@
 L.OTPALayer = L.FeatureGroup.extend({
 
   options: {
-    cutoffMinutes: 60
+    cutoffMinutes: 90
   },
 
   initialize: function (endpoint, options) {
@@ -18,6 +18,7 @@ L.OTPALayer = L.FeatureGroup.extend({
       this._endpoint += '/';
     }
     this._cutoffMinutes = options.cutoffMinutes;
+    this._times = options.times; // cache the times specified last time an isoline was built
     this._pointset = options.pointset;
 
     if (options.location) {
@@ -47,7 +48,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     // TODO: remove locationlayer when this layer is removed!
     this._locationLayer = L.locationLayer(self._location)
         .on('dragend', function(e) {
-          self.setLocation(e.target._latlng);
+          self.setLocation(e.target._latlng); // UPDATES ISOCHRONE WHEN PIN MOVED
         }).addTo(map);
 
     this._isochronesLayer = L.geoJson([], {
@@ -92,6 +93,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     }
   },
 
+  // returns one of two styles depending on whether this is the outer or inner isochrone
   _isochroneStyle: function(seconds) {
     var style = {
       color: '#333',
@@ -102,10 +104,10 @@ L.OTPALayer = L.FeatureGroup.extend({
       dashArray: '5, 5',
       fillOpacity: '0.05'
     };
-    if (seconds == 1800) {
-      style.weight = 3;
-    } else if (seconds == 3600) {
+    if (seconds == this._cutoffMinutes * 60) {
       style.weight = 1.5;
+    } else {
+      style.weight = 3;
     }
     return style;
   },
@@ -134,7 +136,7 @@ L.OTPALayer = L.FeatureGroup.extend({
           self._getIndicator(self._surface.id, self._pointset);
           self._getPointset(self._pointset);
         }
-        self._getIsochrones(self._surface.id);
+        self._getIsochrones(self._times); // todo retain isochrone times
       }
     });
   },
@@ -150,9 +152,16 @@ L.OTPALayer = L.FeatureGroup.extend({
     });
   },
 
-  _getIsochrones: function(surfaceId) {
+
+  // TODO changing me to fetch specific isochrones based on slider
+  _getIsochrones: function(times) {
     var self = this;
-    var path = 'surfaces/' + surfaceId + '/isochrone';
+    var surfaceId = self._surface.id; // WTF
+    var path = 'surfaces/' + surfaceId + '/isochrone?cutoffMinutes='+ self._cutoffMinutes;
+    self._times = times;
+    times.forEach(function(t) {
+        path += ("&cutoffMinutes=" + t);
+    });
     this._getJSON(path, function(isochrones) {
       self._isochronesLayer.clearLayers();
       self._isochronesLayer.addData(isochrones.features);
