@@ -99,7 +99,7 @@ function otpaGraphDensity(selection) {
     // Graph - exit
     selection.exit().remove();
 
-    // UGLY HACK
+    // UGLY HACK this should probably all be done with callbacks and enter/exit selections
     var attr = selection.data()[0].attributes;
     var quantiles = []
     for (var desc in attr) {
@@ -120,7 +120,7 @@ function otpaGraphDensity(selection) {
     // A stack layout transforms the input data set, adding a y0 offset value
     // See https://github.com/mbostock/d3/wiki/Stack-Layout
     var stack = d3.layout.stack() 
-      .offset("wiggle") // other options are: silhouette, wiggle, zero, expand
+      .offset("zero") // other options are: silhouette, wiggle, zero, expand
       .values(function(q) { return q.densities; }) // func to extract values from each layer
       .x(function(d) { return d.x; })              // func to extract x values from densities
       .y(function(d) { return d.y; });             // func to extract y values from densities

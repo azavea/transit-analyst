@@ -46,6 +46,7 @@
           step: 1
         },
         waag = [52.37277, 4.90032],
+        mexico = [19.461, -99.130],
         graphTypes = [
           {type: 'bar', label: 'Bar'},
           {type: 'line', label: 'Line'},
@@ -66,7 +67,7 @@
       endpoint = 'http://' + location.hash.slice(1);
     }
 
-    var map = L.map('map').setView([52.37278, 4.95032], 12);
+    var map = L.map('map').setView(waag, 12);
 
     L.tileLayer(tileUrl, {
       maxZoom: 18
@@ -83,8 +84,7 @@
         range.value = value;
         d3.select('#minutes').html(value); // replace span with # of minutes
         update(indicators, value * 60);
-        // update isochrones 
-        otpaLayer._getIsochrones([value]);
+        otpaLayer._displayIsochrone(value);
       });
 
     d3.select('#graph-type').selectAll('option')
@@ -115,7 +115,7 @@
     // // TODO: make sure order of on() and addTo() does not matter
     var otpaLayer = L.otpaLayer(endpoint, {
         cutoffMinutes: range.max,
-        times: [range.value],
+        isochroneMinutes: range.value,
         pointset: pointset,
         location: waag
       }).on('pointsets', function(e) {

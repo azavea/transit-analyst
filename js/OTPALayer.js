@@ -18,7 +18,7 @@ L.OTPALayer = L.FeatureGroup.extend({
       this._endpoint += '/';
     }
     this._cutoffMinutes = options.cutoffMinutes;
-    this._times = options.times; // cache the times specified last time an isoline was built
+    this._isochroneMinutes = options.isochroneMinutes;
     this._pointset = options.pointset;
 
     if (options.location) {
@@ -53,7 +53,19 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     this._isochronesLayer = L.geoJson([], {
       style: function(feature) {
-        return self._isochroneStyle(feature.properties.Time);
+        var style = {
+          color: '#333',
+          fillColor: '#333',
+          lineCap: 'round',
+          lineJoin: 'round',
+          weight: 2,
+          dashArray: '5, 4',
+          fillOpacity: '0.08'
+        };
+        if (feature.properties.Time == this._cutoffMinutes * 60) {
+          style.weight = 1;
+        }
+        return style;
       }
     }).addTo(map);
 
@@ -93,25 +105,6 @@ L.OTPALayer = L.FeatureGroup.extend({
     }
   },
 
-  // returns one of two styles depending on whether this is the outer or inner isochrone
-  _isochroneStyle: function(seconds) {
-    var style = {
-      color: '#333',
-      fillColor: '#333',
-      lineCap: 'round',
-      lineJoin: 'round',
-      weight: 3,
-      dashArray: '5, 5',
-      fillOpacity: '0.05'
-    };
-    if (seconds == this._cutoffMinutes * 60) {
-      style.weight = 1.5;
-    } else {
-      style.weight = 3;
-    }
-    return style;
-  },
-
   _pointsetStyle: function(properties) {
     return {
       radius: 4,
@@ -128,6 +121,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     var path = 'surfaces?'
         + 'fromPlace=' + location.lat + ',' + location.lng
         + '&cutoffMinutes=' + this._cutoffMinutes
+        //+ '&mode=BICYCLE'
         + '&batch=true';
     this._postJSON(path, function(json) {
       if (json && json.id) {
@@ -136,7 +130,7 @@ L.OTPALayer = L.FeatureGroup.extend({
           self._getIndicator(self._surface.id, self._pointset);
           self._getPointset(self._pointset);
         }
-        self._getIsochrones(self._times); // todo retain isochrone times
+        self._getIsochrones();
       }
     });
   },
@@ -154,18 +148,27 @@ L.OTPALayer = L.FeatureGroup.extend({
 
 
   // TODO changing me to fetch specific isochrones based on slider
-  _getIsochrones: function(times) {
+  _getIsochrones: function() {
     var self = this;
-    var surfaceId = self._surface.id; // WTF
-    var path = 'surfaces/' + surfaceId + '/isochrone?cutoffMinutes='+ self._cutoffMinutes;
-    self._times = times;
-    times.forEach(function(t) {
-        path += ("&cutoffMinutes=" + t);
-    });
+    var path = 'surfaces/' + self._surface.id + '/isochrone?spacing=1';
     this._getJSON(path, function(isochrones) {
-      self._isochronesLayer.clearLayers();
-      self._isochronesLayer.addData(isochrones.features);
+      // Index isochrones, keying on time in minutes
+      self._isochrones = {};
+      isochrones.features.forEach(function(feature) {
+        self._isochrones[parseInt(feature.properties.Time) / 60] = feature;
+      });
+      self._displayIsochrone();
     });
+  },
+
+  _displayIsochrone: function(minutes) {
+    minutes = minutes || this._isochroneMinutes; // if no new value is supplied, redraw the last used value
+    this._isochronesLayer.clearLayers();
+    this._isochronesLayer.addData(this._isochrones[minutes]);
+    // maybe surfaceShort should also have a maxtime field
+    // and it might be inefficient to re-add the max isochrone each time, since it does not change 
+    this._isochronesLayer.addData(this._isochrones[this._cutoffMinutes]); 
+    this._isochroneMinutes = minutes;
   },
 
   _getPointsets: function(callback) {
