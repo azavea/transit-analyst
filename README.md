@@ -5,7 +5,7 @@ This demo client can be accessed via Github pages at http://bertspaan.github.io/
 
 By default it will use a local OTP server running on port 8080. If you want to use another server, you can put its URL (including the http:// protocol part and port number as needed) after a hash in the client URL. For example:
 
-http://bertspaan.github.io/otpa-web#http://dev.opentripplanner.org:9090
+`http://bertspaan.github.io/otpa-web#http://dev.opentripplanner.org:9090/otp`
 
 You can get the latest build of OTP at http://dev.opentripplanner.org/jars/otp.jar. This is rebuilt by the Jenkins CI server after every commit to the main OTP repository.
 
