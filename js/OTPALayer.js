@@ -9,7 +9,7 @@
 L.OTPALayer = L.FeatureGroup.extend({
 
   options: {
-    cutoffMinutes: 60
+    cutoffMinutes: 90
   },
 
   initialize: function (endpoint, options) {
@@ -18,6 +18,7 @@ L.OTPALayer = L.FeatureGroup.extend({
       this._endpoint += '/';
     }
     this._cutoffMinutes = options.cutoffMinutes;
+    this._isochroneMinutes = options.isochroneMinutes;
     this._pointset = options.pointset;
 
     if (options.location) {
@@ -47,12 +48,24 @@ L.OTPALayer = L.FeatureGroup.extend({
     // TODO: remove locationlayer when this layer is removed!
     this._locationLayer = L.locationLayer(self._location)
         .on('dragend', function(e) {
-          self.setLocation(e.target._latlng);
+          self.setLocation(e.target._latlng); // UPDATES ISOCHRONE WHEN PIN MOVED
         }).addTo(map);
 
     this._isochronesLayer = L.geoJson([], {
       style: function(feature) {
-        return self._isochroneStyle(feature.properties.Time);
+        var style = {
+          color: '#333',
+          fillColor: '#333',
+          lineCap: 'round',
+          lineJoin: 'round',
+          weight: 2,
+          dashArray: '5, 4',
+          fillOpacity: '0.08'
+        };
+        if (feature.properties.Time == this._cutoffMinutes * 60) {
+          style.weight = 1;
+        }
+        return style;
       }
     }).addTo(map);
 
@@ -92,24 +105,6 @@ L.OTPALayer = L.FeatureGroup.extend({
     }
   },
 
-  _isochroneStyle: function(seconds) {
-    var style = {
-      color: '#333',
-      fillColor: '#333',
-      lineCap: 'round',
-      lineJoin: 'round',
-      weight: 3,
-      dashArray: '5, 5',
-      fillOpacity: '0.05'
-    };
-    if (seconds == 1800) {
-      style.weight = 3;
-    } else if (seconds == 3600) {
-      style.weight = 1.5;
-    }
-    return style;
-  },
-
   _pointsetStyle: function(properties) {
     return {
       radius: 4,
@@ -126,6 +121,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     var path = 'surfaces?'
         + 'fromPlace=' + location.lat + ',' + location.lng
         + '&cutoffMinutes=' + this._cutoffMinutes
+        //+ '&mode=BICYCLE'
         + '&batch=true';
     this._postJSON(path, function(json) {
       if (json && json.id) {
@@ -134,7 +130,7 @@ L.OTPALayer = L.FeatureGroup.extend({
           self._getIndicator(self._surface.id, self._pointset);
           self._getPointset(self._pointset);
         }
-        self._getIsochrones(self._surface.id);
+        self._getIsochrones();
       }
     });
   },
@@ -150,13 +146,29 @@ L.OTPALayer = L.FeatureGroup.extend({
     });
   },
 
-  _getIsochrones: function(surfaceId) {
+
+  // TODO changing me to fetch specific isochrones based on slider
+  _getIsochrones: function() {
     var self = this;
-    var path = 'surfaces/' + surfaceId + '/isochrone';
+    var path = 'surfaces/' + self._surface.id + '/isochrone?spacing=1';
     this._getJSON(path, function(isochrones) {
-      self._isochronesLayer.clearLayers();
-      self._isochronesLayer.addData(isochrones.features);
+      // Index isochrones, keying on time in minutes
+      self._isochrones = {};
+      isochrones.features.forEach(function(feature) {
+        self._isochrones[parseInt(feature.properties.Time) / 60] = feature;
+      });
+      self._displayIsochrone();
     });
+  },
+
+  _displayIsochrone: function(minutes) {
+    minutes = minutes || this._isochroneMinutes; // if no new value is supplied, redraw the last used value
+    this._isochronesLayer.clearLayers();
+    this._isochronesLayer.addData(this._isochrones[minutes]);
+    // maybe surfaceShort should also have a maxtime field
+    // and it might be inefficient to re-add the max isochrone each time, since it does not change 
+    this._isochronesLayer.addData(this._isochrones[this._cutoffMinutes]); 
+    this._isochroneMinutes = minutes;
   },
 
   _getPointsets: function(callback) {

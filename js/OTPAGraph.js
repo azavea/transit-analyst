@@ -21,12 +21,11 @@ d3.otpaGraph = function module() {
       graph = d3.otpaGraphCircle();
     } else if (type == 'table') {
       graph = d3.otpaGraphTable();
+    } else if (type == 'density') {
+      graph = d3.otpaGraphDensity();
     }
-
     graph = graph.width(width);
-
-    selection
-      .call(graph);
+    selection.call(graph);
   }
 
   // Getter/setter functions
@@ -40,8 +39,11 @@ d3.otpaGraph = function module() {
     if (!arguments.length) return width;
     width = _;
     return otpaGraph;
-    };
+  };
 
-  return otpaGraph;
+  // returns the function otpGraph above as a result. then it must be called to actually generate SVG.
+  // This graph function chains through to the specific graph, calling it with the selection
+  // as a parameter.
+  return otpaGraph; 
 
 };

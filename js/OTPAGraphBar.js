@@ -110,20 +110,20 @@ d3.otpaGraphBar = function module() {
     // Bar - update
     selection.selectAll('.bar-group').each(function(d) {
       d3.select(this).select('.bar')
-          .transition()
-          .duration(300)
+//          .transition()
+//          .duration(200)
           .attr('y', function(d) { return y(d.value); })
           .attr('height', function(d) { return height - y(d.value); });
 
       d3.select(this).select('.bar-total')
-          .transition()
-          .duration(300)
+//          .transition()
+//          .duration(200)
           .attr('y', function(d) { return y(d.total); })
           .attr('height', function(d) { return height - y(d.total); });
 
       d3.select(this).select('.text')
-          .transition()
-          .duration(300)
+//          .transition()
+//          .duration(200)
           .attr('y', function(d) { return y(d.value) - 5; })
           .text(function(d) { return format(Math.round(d.value)); });
     });
