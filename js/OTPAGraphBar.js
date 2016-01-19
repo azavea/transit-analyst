@@ -31,20 +31,21 @@ d3.otpaGraphBar = function module() {
       .orient("left");
 
   function countFromSeconds(seconds, indicator) {
-    if (seconds < indicator.breaks[0]) {
+
+    if (seconds < indicator[0]) {
       return 0;
     }
-    for (var i = 0; i < indicator.breaks.length - 1; i++) {
-      var low = indicator.breaks[i];
-      var high = indicator.breaks[i + 1];
+    for (var i = 0; i < indicator.length - 1; i++) {
+      var low = indicator[i];
+      var high = indicator[i + 1];
       if (seconds < high) {
         // x is in this slice (x >= low because the breaks are sorted)
         var fraction = (seconds  - low) / (high - low);
-        var n_slices = indicator.breaks.length - 1;
-        return ((i + fraction) / n_slices) * indicator.count;
+        var n_slices = indicator.length - 1;
+        return ((i + fraction) / n_slices) * indicator.length;
       }
     }
-    return indicator.count;
+    return indicator.length;
   }
 
   function otpaGraphBar(selection) {
@@ -69,8 +70,9 @@ d3.otpaGraphBar = function module() {
           var countMax = 0;
 
           var data = Object.keys(d.attributes).map(function(indicator) {
-            countMax = Math.max(countMax, d.attributes[indicator].count);
-            return {value: countFromSeconds(d.seconds, d.attributes[indicator]), total: d.attributes[indicator].count};
+            countMax = Math.max(countMax, d.attributes[indicator]);
+
+            return {value: countFromSeconds(d.seconds, d.attributes[indicator]), total: d.attributes[indicator].length};
           });
 
           y.domain([0, countMax]);
@@ -109,6 +111,7 @@ d3.otpaGraphBar = function module() {
 
     // Bar - update
     selection.selectAll('.bar-group').each(function(d) {
+
       d3.select(this).select('.bar')
 //          .transition()
 //          .duration(200)

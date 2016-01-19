@@ -7,6 +7,8 @@
 	<link rel="stylesheet" href="css/style.css" />
 	<link rel="stylesheet" href="css/otpagraph.css" />
 	<link rel="stylesheet" href="css/leaflet.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.0.0/lodash.min.js"></script>
   <script src="js/d3.min.js" charset="utf-8"></script>
   <script src="js/leaflet-src.js" charset="utf-8"></script>
   <script src="js/OTPAGraph.js" charset="utf-8"></script>
@@ -36,17 +38,14 @@
   </div>
   <script>
     var endpoint = 'http://localhost:8080/otp/',
-        //tileUrl = 'http://otile2.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.png',
-        tileUrl = 'http://tiles.citysdk.waag.org/v2/citysdk/{z}/{x}/{y}.png',
-        //tileUrl = 'https://{s}.tiles.mapbox.com/v3/bertspaan.ifjap2fa/{z}/{x}/{y}.png',
+        tileUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
         range = {
           value: 40,
           min: 1,
           max: 90,
           step: 1
         },
-        waag = [52.37277, 4.90032],
-        mexico = [19.461, -99.130],
+        philly = [39.952671, -75.165475],
         graphTypes = [
           {type: 'bar', label: 'Bar'},
           {type: 'line', label: 'Line'},
@@ -54,8 +53,8 @@
           {type: 'table', label: 'Table'},
           {type: 'density', label: 'Density'}
         ],
-        pointset = 'schools.geo',
-        indicator = 'kandidaten',
+        pointset = 'cornerstores.geo',
+        indicator = 'cdc_store_level',
         indicators = {},
         graphType = graphTypes[0].type,
         visWidth = 300,
@@ -67,7 +66,8 @@
       endpoint = 'http://' + location.hash.slice(1);
     }
 
-    var map = L.map('map').setView(waag, 12);
+    var map = L.map('map').setView(philly, 12);
+    window.myMap = map;
 
     L.tileLayer(tileUrl, {
       maxZoom: 18
@@ -83,8 +83,10 @@
         var value = d3.select(this).property('value');
         range.value = value;
         d3.select('#minutes').html(value); // replace span with # of minutes
-        update(indicators, value * 60);
-        otpaLayer._displayIsochrone(value);
+
+        otpaLayer.updateTime(value).then(function(mins) {
+          update(indicators, mins * 60);
+        });
       });
 
     d3.select('#graph-type').selectAll('option')
@@ -117,7 +119,7 @@
         cutoffMinutes: range.max,
         isochroneMinutes: range.value,
         pointset: pointset,
-        location: waag
+        location: philly
       }).on('pointsets', function(e) {
         d3.select('#pointsets').selectAll('option')
             .data(e.data).enter()
@@ -126,7 +128,8 @@
             .html(function(d) { return d.id; });
       }).on('change', function(e) {
         indicators = e.data;
-        var indicatorKeys = Object.keys(indicators.features[0].properties.structured);
+        var indicatorKeys = Object.keys(indicators.data);
+        //var indicatorKeys = Object.keys(indicators.features[0].properties.structured);
         var options = d3.select('#indicators').selectAll('option')
           .data(indicatorKeys, function(d) { return d; })
 
@@ -142,7 +145,8 @@
     // update() calls otpaGraph with a DOM selection as a parameter.
     // otpaGraph chains the call through to a specific graph type.
     function update(data, seconds) {
-      var attributes = data.features[0].properties.structured[indicator];
+      var attributes = data.data[indicator];
+      //var attributes = data.features[0].properties.structured[indicator];
       d3.select('#graph').selectAll('.otpa-graph')
           .data([{seconds: seconds, attributes: attributes}])
           .call(otpaGraph);

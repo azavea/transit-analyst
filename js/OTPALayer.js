@@ -6,9 +6,11 @@
  * client-side/server-side classification/binning and rendering abstract/transparent
  */
 
+
 L.OTPALayer = L.FeatureGroup.extend({
 
   options: {
+    isochroneMinutes: 40,
     cutoffMinutes: 90
   },
 
@@ -32,6 +34,7 @@ L.OTPALayer = L.FeatureGroup.extend({
 
   addTo: function (map) {
     var self = this;
+
     if (!self._location) {
       self._location = map.getCenter();
     }
@@ -42,14 +45,18 @@ L.OTPALayer = L.FeatureGroup.extend({
       self.fireEvent('pointsets', {data: pointsets});
     });
 
-    //if (this._pointset)
-
     // When layer is added to map, also add LocationLayer
     // TODO: remove locationlayer when this layer is removed!
-    this._locationLayer = L.locationLayer(self._location)
+    this._locationLayer = L.marker(self._location, {'draggable': true})
         .on('dragend', function(e) {
           self.setLocation(e.target._latlng); // UPDATES ISOCHRONE WHEN PIN MOVED
         }).addTo(map);
+
+    this._pointsetLayer = L.geoJson([], {
+      pointToLayer: function (feature, latlng) {
+          return L.circleMarker(latlng, self._pointsetStyle(feature.properties));
+      }
+    }).addTo(map);
 
     this._isochronesLayer = L.geoJson([], {
       style: function(feature) {
@@ -62,24 +69,20 @@ L.OTPALayer = L.FeatureGroup.extend({
           dashArray: '5, 4',
           fillOpacity: '0.08'
         };
-        if (feature.properties.Time == this._cutoffMinutes * 60) {
+        if (feature.properties['time'] == self._cutoffMinutes * 60) {
           style.weight = 1;
         }
         return style;
       }
     }).addTo(map);
 
-    this._pointsetLayer = L.geoJson([], {
-      pointToLayer: function (feature, latlng) {
-          return L.circleMarker(latlng, self._pointsetStyle(feature.properties));
-      }
-    }).addTo(map);
-
     self.addLayer(this._locationLayer);
+
     self.addLayer(this._isochronesLayer);
+
     self.addLayer(this._pointsetLayer);
 
-    self._createSurface(self._location);
+    self._createSurface(this._location, true);
 
     return self;
   },
@@ -87,7 +90,7 @@ L.OTPALayer = L.FeatureGroup.extend({
   setLocation: function (latlng) {
     var self = this;
     self._location = latlng;
-    self._createSurface(self._location);
+    self._createSurface(self._location, false);
   },
 
   setPointset: function (pointset) {
@@ -116,21 +119,26 @@ L.OTPALayer = L.FeatureGroup.extend({
     };
   },
 
-  _createSurface: function(location) {
+  _createSurface: function(location, getPointset) {
     var self = this;
     var path = 'surfaces?'
         + 'fromPlace=' + location.lat + ',' + location.lng
         + '&cutoffMinutes=' + this._cutoffMinutes
-        //+ '&mode=BICYCLE'
+        + '&mode=WALK,TRANSIT'
         + '&batch=true';
-    this._postJSON(path, function(json) {
+
+    self._postJSON(path, function(json) {
+
+      if (getPointset && self._pointset) {
+        self._getPointset(self._pointset);
+      }
+
       if (json && json.id) {
         self._surface = json;
+        self._getIsochrones(json.id);
         if (self._pointset) {
-          self._getIndicator(self._surface.id, self._pointset);
-          self._getPointset(self._pointset);
+          self._getIndicator(json.id, self._pointset);
         }
-        self._getIsochrones();
       }
     });
   },
@@ -146,29 +154,56 @@ L.OTPALayer = L.FeatureGroup.extend({
     });
   },
 
-
-  // TODO changing me to fetch specific isochrones based on slider
-  _getIsochrones: function() {
+  _displayIsochrone: function(minutes) {
     var self = this;
-    var path = 'surfaces/' + self._surface.id + '/isochrone?spacing=1';
+
+    if (!self._isochrones) {
+      console.error('no isochrones to display from!');
+      return;
+    }
+
+    var layer = self._isochrones[minutes];
+
+    if (!layer) {
+      console.error('no isochrone found for ' + minutes + ' minutes!');
+      return;
+    }
+
+    self._isochronesLayer.clearLayers();
+    self._isochronesLayer.addData(layer);
+  },
+
+  _getIsochrones: function(surfaceId) {
+    var self = this;
+    var path = 'surfaces/' + surfaceId + '/isochrone?spacing=1&nMax=' + this._cutoffMinutes;
     this._getJSON(path, function(isochrones) {
-      // Index isochrones, keying on time in minutes
-      self._isochrones = {};
+
+      self._isochronesLayer.clearLayers();
+      self._isochrones = [];
+
       isochrones.features.forEach(function(feature) {
-        self._isochrones[parseInt(feature.properties.Time) / 60] = feature;
+        var minutes = parseInt(feature.properties['time'] / 60);
+        self._isochrones[minutes] = feature;
       });
-      self._displayIsochrone();
+
+      self._displayIsochrone(self._isochroneMinutes);
+
     });
   },
 
-  _displayIsochrone: function(minutes) {
-    minutes = minutes || this._isochroneMinutes; // if no new value is supplied, redraw the last used value
-    this._isochronesLayer.clearLayers();
-    this._isochronesLayer.addData(this._isochrones[minutes]);
-    // maybe surfaceShort should also have a maxtime field
-    // and it might be inefficient to re-add the max isochrone each time, since it does not change 
-    this._isochronesLayer.addData(this._isochrones[this._cutoffMinutes]); 
-    this._isochroneMinutes = minutes;
+  updateTime: function(minutes) {
+    var self = this;
+
+    var dfd = $.Deferred();
+
+    var debounced = _.debounce(function(mins) {
+      self._isochroneMinutes = minutes;
+      self._displayIsochrone(minutes);
+      dfd.resolve(mins);
+    }, 250, {'trailing': true})
+
+    debounced(minutes);
+    return dfd.promise();
   },
 
   _getPointsets: function(callback) {
@@ -180,8 +215,9 @@ L.OTPALayer = L.FeatureGroup.extend({
     var self = this;
     var path = 'pointsets/' + this._pointset;
     this._getJSON(path, function(pointset) {
-      self._pointsetLayer.clearLayers();
-      self._pointsetLayer.addData(pointset.features);
+      // TODO: have total count here as "n"; use for graph totals, if summary
+      // (have modified backend to always return all as geojson, instead of summary if > 200)
+      self._pointsetLayer.addData(pointset);
     });
   },
 
@@ -196,7 +232,7 @@ L.OTPALayer = L.FeatureGroup.extend({
   _getJSON: function(path, callback) {
     // Uses D3's json call. TODO: replace with regular JS ajax call?
     d3.json(this._endpoint + path, callback);
-  }
+  },
 
 });
 
