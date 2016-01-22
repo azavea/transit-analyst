@@ -11,7 +11,8 @@ L.OTPALayer = L.FeatureGroup.extend({
 
   options: {
     isochroneMinutes: 40,
-    cutoffMinutes: 90
+    cutoffMinutes: 90,
+    spinner: undefined
   },
 
   initialize: function (endpoint, options) {
@@ -28,6 +29,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     }
 
     this._layers = [];
+    this._pendingRequests = 0;
 
     options = L.setOptions(this, options);
   },
@@ -251,7 +253,10 @@ L.OTPALayer = L.FeatureGroup.extend({
   },
 
   _postJSON: function(path, callback) {
+    var self = this;
+    self._showSpinner();
     d3.xhr(this._endpoint + path).post(null, function(error, data) {
+      self._hideSpinner();
       if (data && data.response) {
         callback(JSON.parse(data.response));
       }
@@ -259,10 +264,32 @@ L.OTPALayer = L.FeatureGroup.extend({
   },
 
   _getJSON: function(path, callback) {
+    var self = this;
+    self._showSpinner();
     // Uses D3's json call. TODO: replace with regular JS ajax call?
-    d3.json(this._endpoint + path, callback);
+    d3.json(this._endpoint + path, function(json) {
+        self._hideSpinner();
+        callback(json);
+    });
   },
 
+  _showSpinner: function() {
+    if (this.options.spinner) {
+      var $spinner = $(this.options.spinner);
+      $spinner.show();
+      this._pendingRequests += 1;
+    }
+  },
+
+  _hideSpinner: function() {
+    if (this.options.spinner) {
+      this._pendingRequests -= 1;
+      if (this._pendingRequests === 0) {
+        var $spinner = $(this.options.spinner);
+        $spinner.hide();
+      }
+    }
+  },
 });
 
 L.otpaLayer = function (url, options) {
