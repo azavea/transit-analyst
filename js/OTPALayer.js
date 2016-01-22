@@ -58,6 +58,12 @@ L.OTPALayer = L.FeatureGroup.extend({
       }
     }).addTo(map);
 
+    this._filteredPointsetLayer = L.geoJson([], {
+      pointToLayer: function (feature, latlng) {
+          return L.circleMarker(latlng, self._filteredPointsetStyle(feature.properties));
+      }
+    }).addTo(map);
+
     this._isochronesLayer = L.geoJson([], {
       style: function(feature) {
         var style = {
@@ -113,6 +119,17 @@ L.OTPALayer = L.FeatureGroup.extend({
       radius: 4,
       fillColor: "black",
       color: "#000",
+      weight: 1,
+      opacity: 0.5,
+      fillOpacity: 0.3
+    };
+  },
+
+  _filteredPointsetStyle: function(properties) {
+    return {
+      radius: 4,
+      fillColor: "#90EE90",
+      color: "#90EE90",
       weight: 1,
       opacity: 1,
       fillOpacity: 0.8
@@ -171,6 +188,17 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     self._isochronesLayer.clearLayers();
     self._isochronesLayer.addData(layer);
+
+    // Draw the filtered pointset layer based on what fits inside the isochrone
+    if (self._pointsetData) {
+        self._filteredPointsetLayer.clearLayers();
+        self._pointsetData.features.forEach(function(feature) {
+            var matchingPolygons = leafletPip.pointInLayer(feature.geometry.coordinates, self._isochronesLayer);
+            if (matchingPolygons.length > 0) {
+                self._filteredPointsetLayer.addData(feature);
+            }
+        });
+    }
   },
 
   _getIsochrones: function(surfaceId) {
@@ -217,6 +245,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     this._getJSON(path, function(pointset) {
       // TODO: have total count here as "n"; use for graph totals, if summary
       // (have modified backend to always return all as geojson, instead of summary if > 200)
+      self._pointsetData = pointset;
       self._pointsetLayer.addData(pointset);
     });
   },
