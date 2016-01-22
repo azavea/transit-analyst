@@ -119,6 +119,7 @@
     var otpaLayer = L.otpaLayer(endpoint, {
         cutoffMinutes: range.max,
         isochroneMinutes: range.value,
+        spinner: '#spinner',
         pointset: pointset,
         location: philly
       }).on('pointsets', function(e) {
