@@ -139,7 +139,9 @@
         isochroneMinutes: range.value,
         spinner: '#spinner',
         pointset: pointset,
-        location: philly
+        location: philly,
+        smoothFactor: 0.25,
+        noClip: true
       }).on('pointsets', function(e) {
         d3.select('#pointsets').selectAll('option')
             .data(e.data).enter()

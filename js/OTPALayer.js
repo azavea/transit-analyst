@@ -94,16 +94,26 @@ L.OTPALayer = L.FeatureGroup.extend({
     this._surfaceLayer = null;
 
     this._isochronesLayer = L.geoJson([], {
-      smoothFactor: 0.25,
+      /*
+      style: {
+        color: 'red',
+        smoothFactor: 0.5,
+        noClip: true
+      }
+      */
       style: function(feature) {
         var style = {
+          smoothFactor: 0.7,
+          noClip: true,
           color: '#333',
           fillColor: '#333',
           lineCap: 'round',
           lineJoin: 'round',
           weight: 2,
           dashArray: '5, 4',
-          fillOpacity: '0.08'
+          fillOpacity: '0.08',
+          smoothFactor: 0.0,
+          noClip: true,
         };
         if (feature.properties['time'] == self._cutoffMinutes * 60) {
           style.weight = 1;
@@ -231,6 +241,34 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     if (!layer) {
       console.error('no isochrone found for ' + minutes + ' minutes!');
+
+      // go get it lazily here
+      var path = 'routers/default/isochrone?' + this._otpRequestParams
+        + '&algoritm=accSampling'
+        + '&precisionMeters=75'
+        + '&cutoffSec=' + minutes * 60;
+
+      console.log('going to query isochrones from: ' + path);
+
+      // TODO: spacing here should come from the slider step value
+      //var path = 'surfaces/' + surfaceId + '/isochrone?spacing=15&nMax=' + this._cutoffMinutes;
+      this._getJSON(path, function(isochrones) {
+
+        self._isochronesLayer.clearLayers();
+
+        isochrones.features.forEach(function(feature) {
+          console.log('found a feature with properties:');
+          console.log(feature.properties);
+          var minutes = parseInt(feature.properties['time'] / 60);
+          console.log('adding feature to minutes ' + minutes);
+          self._isochrones[minutes] = feature;
+        });
+
+        // try again
+        self._displayIsochrone(self._isochroneMinutes);
+
+      });
+
       return;
     }
 
@@ -267,13 +305,16 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     // instead of using analyst isochrone endpoint, use the normal isochrone endpoint
     // share some of these params with query above
-    var path = 'routers/default/isochrone?' + this._otpRequestParams + '&algoritm=accSampling&precisionMeters=100';
+    var path = 'routers/default/isochrone?' + this._otpRequestParams
+      + '&algoritm=accSampling'
+      + '&precisionMeters=75'
+      + '&cutoffSec=' + self._isochroneMinutes * 60;
 
     // TODO: share step/min value with index.html
     // request an isochrone for each 15 minute increment
-    for (var i = 15; i < 90; i += 15) {
-      path += '&cutoffSec=' + i * 60;
-    }
+    //for (var i = 15; i < 90; i += 15) {
+    //  path += '&cutoffSec=' + i * 60;
+    //}
 
     console.log('going to query isochrones from: ' + path);
 
