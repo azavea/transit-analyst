@@ -30,24 +30,6 @@ d3.otpaGraphBar = function module() {
       .scale(y)
       .orient("left");
 
-  function countFromSeconds(seconds, indicator) {
-
-    if (seconds < indicator[0]) {
-      return 0;
-    }
-    for (var i = 0; i < indicator.length - 1; i++) {
-      var low = indicator[i];
-      var high = indicator[i + 1];
-      if (seconds < high) {
-        // x is in this slice (x >= low because the breaks are sorted)
-        var fraction = (seconds  - low) / (high - low);
-        var n_slices = indicator.length - 1;
-        return ((i + fraction) / n_slices) * indicator.length;
-      }
-    }
-    return indicator.length;
-  }
-
   function otpaGraphBar(selection) {
 
     // Graph - enter
@@ -69,17 +51,31 @@ d3.otpaGraphBar = function module() {
           // TODO: use d3.extent instead?
           var countMax = 0;
 
-          var data = Object.keys(d.attributes).map(function(indicator) {
-            countMax = Math.max(countMax, d.attributes[indicator]);
+    console.log('d.seconds is ' + d.seconds);
+    console.log('attributes with indicator ' + indicator + ' is:');
+    console.log(d.attributes); // has sums and counts
+  
+    var minuteOffset = (d.seconds / 60) - 1;
+    if (minuteOffset < 0) {
+      minuteOffset = 0;
+    }
 
-            return {value: countFromSeconds(d.seconds, d.attributes[indicator]), total: d.attributes[indicator].length};
-          });
+    var data = Object.keys(d.attributes).map(function(indicator) {
+      countMax = Math.max(countMax, d.attributes[indicator][minuteOffset]);
+      return {value: d.attributes[indicator][minuteOffset], total: countMax};
+    });
 
-          y.domain([0, countMax]);
-          x.domain(Object.keys(d.attributes))
+    console.log('countMax: ' + countMax);
+    console.log('keys: ' + Object.keys(d.attributes));
 
-          return data;
-        });
+    // TODO: get object count some other way
+    countMax = d.attributes.counts[d.attributes.counts.length - 1];
+    
+    y.domain([0, countMax]);
+    x.domain(Object.keys(d.attributes))
+
+    return data;
+  });
 
     // Bar - enter
     var barGroup = barGroups.enter().append('g')
@@ -89,6 +85,7 @@ d3.otpaGraphBar = function module() {
         .attr('class', 'text')
         .attr('x', function(d, i) { return margin.left + i * x.rangeBand() + x.rangeBand() / 2 - barGap / 2; });
 
+    /*
     barGroup.append('rect')
         .attr('class', 'bar-total')
         .attr('fill', function(d, i) { return color(i); })
@@ -96,6 +93,7 @@ d3.otpaGraphBar = function module() {
         .style("stroke", 'none')
         .attr('width', function(d) { return x.rangeBand() - barGap; })
         .attr('x', function(d, i) { return margin.left + i * x.rangeBand(); });
+   */
 
     barGroup.append('rect')
         .attr('class', 'bar')
@@ -118,11 +116,11 @@ d3.otpaGraphBar = function module() {
           .attr('y', function(d) { return y(d.value); })
           .attr('height', function(d) { return height - y(d.value); });
 
-      d3.select(this).select('.bar-total')
+//      d3.select(this).select('.bar-total')
 //          .transition()
 //          .duration(200)
-          .attr('y', function(d) { return y(d.total); })
-          .attr('height', function(d) { return height - y(d.total); });
+//          .attr('y', function(d) { return y(d.total); })
+//          .attr('height', function(d) { return height - y(d.total); });
 
       d3.select(this).select('.text')
 //          .transition()
