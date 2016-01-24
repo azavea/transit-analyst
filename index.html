@@ -27,7 +27,7 @@
     <div class="container">
       <h1>Transit Data Analyst</h1>
       <p></p>
-      <h4>Objects reachable within <span id="minutes">40</span> minutes:</h4>
+      <h4>Objects reachable within <span id="minutes">30</span> minutes:</h4>
       <table id="options">
         <tr><td>Travel time:</td><td><div id="slider"></div></td>
         <tr><td>Visualization:</td><td><select id="graph-type"></div></td>
@@ -57,10 +57,10 @@
     var endpoint = 'http://localhost:8080/otp/',
         tileUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
         range = {
-          value: 40,
-          min: 1,
+          value: 30,
+          min: 15,
           max: 90,
-          step: 1
+          step: 15
         },
         philly = [39.952671, -75.165475],
         graphTypes = [

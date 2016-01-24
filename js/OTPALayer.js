@@ -243,7 +243,8 @@ L.OTPALayer = L.FeatureGroup.extend({
 
   _getIsochrones: function(surfaceId) {
     var self = this;
-    var path = 'surfaces/' + surfaceId + '/isochrone?spacing=1&nMax=' + this._cutoffMinutes;
+    // TODO: spacing here should come from the slider step value
+    var path = 'surfaces/' + surfaceId + '/isochrone?spacing=15&nMax=' + this._cutoffMinutes;
     this._getJSON(path, function(isochrones) {
 
       self._isochronesLayer.clearLayers();
