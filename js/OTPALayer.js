@@ -54,16 +54,41 @@ L.OTPALayer = L.FeatureGroup.extend({
           self.setLocation(e.target._latlng); // UPDATES ISOCHRONE WHEN PIN MOVED
         }).addTo(map);
 
+    var lastLayer = null;
+    var onEachPoint = function(style) {
+        return function(feature, layer) {
+          layer.on({
+              mouseover: function highlightFeature(e) {
+                  var layer = e.target;
+
+                  if (lastLayer) {
+                      lastLayer.setStyle(style());
+                  }
+                  layer.setStyle(self._highlightedPointsetStyle());
+                  layer.bringToFront();
+
+                  self.fireEvent('select', {data: layer.feature.properties});
+              },
+
+              mouseout: function resetHighlight(e) {
+                  lastLayer = layer;
+              }
+          });
+        }
+    }
+
     this._pointsetLayer = L.geoJson([], {
       pointToLayer: function (feature, latlng) {
-          return L.circleMarker(latlng, self._pointsetStyle(feature.properties));
-      }
+          return L.circleMarker(latlng, self._pointsetStyle());
+      },
+      onEachFeature: onEachPoint(self._pointsetStyle)
     }).addTo(map);
 
     this._filteredPointsetLayer = L.geoJson([], {
       pointToLayer: function (feature, latlng) {
-          return L.circleMarker(latlng, self._filteredPointsetStyle(feature.properties));
-      }
+          return L.circleMarker(latlng, self._filteredPointsetStyle());
+      },
+      onEachFeature: onEachPoint(self._filteredPointsetStyle)
     }).addTo(map);
 
     this._isochronesLayer = L.geoJson([], {
@@ -116,10 +141,10 @@ L.OTPALayer = L.FeatureGroup.extend({
     }
   },
 
-  _pointsetStyle: function(properties) {
+  _pointsetStyle: function() {
     return {
       radius: 4,
-      fillColor: "black",
+      fillColor: "#000",
       color: "#000",
       weight: 1,
       opacity: 0.5,
@@ -127,11 +152,22 @@ L.OTPALayer = L.FeatureGroup.extend({
     };
   },
 
-  _filteredPointsetStyle: function(properties) {
+  _filteredPointsetStyle: function() {
     return {
       radius: 4,
       fillColor: "#90EE90",
       color: "#90EE90",
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.8
+    };
+  },
+
+  _highlightedPointsetStyle: function() {
+    return {
+      radius: 4,
+      fillColor: "#90EE90",
+      color: "#000",
       weight: 1,
       opacity: 1,
       fillOpacity: 0.8
