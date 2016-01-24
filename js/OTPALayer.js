@@ -91,27 +91,9 @@ L.OTPALayer = L.FeatureGroup.extend({
       onEachFeature: onEachPoint(self._filteredPointsetStyle)
     }).addTo(map);
 
-    this._isochronesLayer = L.geoJson([], {
-      style: function(feature) {
-        var style = {
-          color: '#333',
-          fillColor: '#333',
-          lineCap: 'round',
-          lineJoin: 'round',
-          weight: 2,
-          dashArray: '5, 4',
-          fillOpacity: '0.08'
-        };
-        if (feature.properties['time'] == self._cutoffMinutes * 60) {
-          style.weight = 1;
-        }
-        return style;
-      }
-    }).addTo(map);
+    this._isochronesLayer = null;
 
     self.addLayer(this._locationLayer);
-
-    self.addLayer(this._isochronesLayer);
 
     self.addLayer(this._pointsetLayer);
 
@@ -212,23 +194,9 @@ L.OTPALayer = L.FeatureGroup.extend({
   },
 
   _displayIsochrone: function(minutes) {
-    var self = this;
+    console.log('now what? have selected minutes: ' + minutes);
 
-    if (!self._isochrones) {
-      console.error('no isochrones to display from!');
-      return;
-    }
-
-    var layer = self._isochrones[minutes];
-
-    if (!layer) {
-      console.error('no isochrone found for ' + minutes + ' minutes!');
-      return;
-    }
-
-    self._isochronesLayer.clearLayers();
-    self._isochronesLayer.addData(layer);
-
+    /*
     // Draw the filtered pointset layer based on what fits inside the isochrone
     if (self._pointsetData) {
         self._filteredPointsetLayer.clearLayers();
@@ -239,10 +207,20 @@ L.OTPALayer = L.FeatureGroup.extend({
             }
         });
     }
+    */
   },
 
   _getIsochrones: function(surfaceId) {
     var self = this;
+
+    if (this._isochronesLayer != null) {
+      map.removeLayer(this._isochronesLayer);
+    }
+
+    var tileUrl = 'http://localhost:8080/otp/surfaces/' + surfaceId + '/isotiles/{z}/{x}/{y}.png';
+    self._isochronesLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(map);
+
+    /*
     // TODO: spacing here should come from the slider step value
     var path = 'surfaces/' + surfaceId + '/isochrone?spacing=15&nMax=' + this._cutoffMinutes;
     this._getJSON(path, function(isochrones) {
@@ -258,6 +236,7 @@ L.OTPALayer = L.FeatureGroup.extend({
       self._displayIsochrone(self._isochroneMinutes);
 
     });
+    */
   },
 
   updateTime: function(minutes) {
