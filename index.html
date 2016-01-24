@@ -150,7 +150,10 @@
             .html(function(d) { return d.id; });
       }).on('change', function(e) {
         indicators = e.data;
-        var indicatorKeys = Object.keys(indicators.data);
+        var indicatorKeys;
+        if (indicators) {
+          indicatorKeys = Object.keys(indicators.data);
+        }
         //var indicatorKeys = Object.keys(indicators.features[0].properties.structured);
         var options = d3.select('#indicators').selectAll('option')
           .data(indicatorKeys, function(d) { return d; })
@@ -170,9 +173,11 @@
 
     // update() calls otpaGraph with a DOM selection as a parameter.
     // otpaGraph chains the call through to a specific graph type.
+    var attributes = {};
     function update(data, seconds) {
-      var attributes = data.data[indicator];
-      //var attributes = data.features[0].properties.structured[indicator];
+      if (data && data.data) {
+        var attributes = data.data[indicator];
+      }
       d3.select('#graph').selectAll('.otpa-graph')
           .data([{seconds: seconds, attributes: attributes}])
           .call(otpaGraph);

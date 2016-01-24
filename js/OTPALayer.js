@@ -110,9 +110,9 @@ L.OTPALayer = L.FeatureGroup.extend({
           lineCap: 'round',
           lineJoin: 'round',
           weight: 2,
-          dashArray: '5, 4',
-          fillOpacity: '0.08',
-          smoothFactor: 0.0,
+          //dashArray: '5, 4',
+          fillOpacity: '0.1',
+          smoothFactor: 0.25,
           noClip: true,
         };
         if (feature.properties['time'] == self._cutoffMinutes * 60) {
@@ -277,6 +277,7 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     // Draw the filtered pointset layer based on what fits inside the isochrone
 
+    /*
     var matches = 0;
     if (self._pointsetData) {
         self._filteredPointsetLayer.clearLayers();
@@ -289,19 +290,18 @@ L.OTPALayer = L.FeatureGroup.extend({
         });
         console.log('found ' + matches + ' points in polygon');
     }
+    */
   },
 
   _getIsochrones: function(surfaceId) {
     var self = this;
 
-    /*
     if (this._surfaceLayer != null) {
       map.removeLayer(this._surfaceLayer);
     }
 
     var tileUrl = 'http://localhost:8080/otp/surfaces/' + surfaceId + '/isotiles/{z}/{x}/{y}.png';
     self._surfaceLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(map);
-    */
 
     // instead of using analyst isochrone endpoint, use the normal isochrone endpoint
     // share some of these params with query above

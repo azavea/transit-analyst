@@ -60,6 +60,10 @@ d3.otpaGraphBar = function module() {
       minuteOffset = 0;
     }
 
+    if (!d.attributes) {
+      return {value: 0, total: 0};
+    }
+
     var data = Object.keys(d.attributes).map(function(indicator) {
       countMax = Math.max(countMax, d.attributes[indicator][minuteOffset]);
       return {value: d.attributes[indicator][minuteOffset], total: countMax};
