@@ -91,9 +91,30 @@ L.OTPALayer = L.FeatureGroup.extend({
       onEachFeature: onEachPoint(self._filteredPointsetStyle)
     }).addTo(map);
 
-    this._isochronesLayer = null;
+    this._surfaceLayer = null;
+
+    this._isochronesLayer = L.geoJson([], {
+      smoothFactor: 0.25,
+      style: function(feature) {
+        var style = {
+          color: '#333',
+          fillColor: '#333',
+          lineCap: 'round',
+          lineJoin: 'round',
+          weight: 2,
+          dashArray: '5, 4',
+          fillOpacity: '0.08'
+        };
+        if (feature.properties['time'] == self._cutoffMinutes * 60) {
+          style.weight = 1;
+        }
+        return style;
+      }
+    }).addTo(map);
 
     self.addLayer(this._locationLayer);
+
+    self.addLayer(this._isochronesLayer);
 
     self.addLayer(this._pointsetLayer);
 
@@ -158,12 +179,15 @@ L.OTPALayer = L.FeatureGroup.extend({
 
   _createSurface: function(location, getPointset) {
     var self = this;
-    var path = 'surfaces?'
-        + 'fromPlace=' + location.lat + ',' + location.lng
+
+    this._otpRequestParams = 'fromPlace=' + location.lat + ',' + location.lng
         + '&date=2016-01-20&time=06:00pm'
         + '&maxWalkDistance=3218.69' // 2 mi
+        + '&mode=TRANSIT,WALK';
+
+    var path = 'surfaces?' 
+        + this._otpRequestParams
         + '&cutoffMinutes=' + this._cutoffMinutes
-        + '&mode=TRANSIT,WALK'
         + '&batch=true';
 
     self._postJSON(path, function(json) {
@@ -194,49 +218,84 @@ L.OTPALayer = L.FeatureGroup.extend({
   },
 
   _displayIsochrone: function(minutes) {
-    console.log('now what? have selected minutes: ' + minutes);
+    var self = this;
 
-    /*
+    console.log('have selected isochrone for minutes: ' + minutes);
+
+    if (!self._isochrones) {
+      console.error('no isochrones to display from!');
+      return;
+    }
+
+    var layer = self._isochrones[minutes];
+
+    if (!layer) {
+      console.error('no isochrone found for ' + minutes + ' minutes!');
+      return;
+    }
+
+    self._isochronesLayer.clearLayers();
+    self._isochronesLayer.addData(layer);
+
     // Draw the filtered pointset layer based on what fits inside the isochrone
+
+    var matches = 0;
     if (self._pointsetData) {
         self._filteredPointsetLayer.clearLayers();
         self._pointsetData.features.forEach(function(feature) {
             var matchingPolygons = leafletPip.pointInLayer(feature.geometry.coordinates, self._isochronesLayer);
             if (matchingPolygons.length > 0) {
                 self._filteredPointsetLayer.addData(feature);
+                matches += matchingPolygons.length;
             }
         });
+        console.log('found ' + matches + ' points in polygon');
     }
-    */
   },
 
   _getIsochrones: function(surfaceId) {
     var self = this;
 
-    if (this._isochronesLayer != null) {
-      map.removeLayer(this._isochronesLayer);
+    /*
+    if (this._surfaceLayer != null) {
+      map.removeLayer(this._surfaceLayer);
     }
 
     var tileUrl = 'http://localhost:8080/otp/surfaces/' + surfaceId + '/isotiles/{z}/{x}/{y}.png';
-    self._isochronesLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(map);
+    self._surfaceLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(map);
+    */
 
-    /*
+    // instead of using analyst isochrone endpoint, use the normal isochrone endpoint
+    // share some of these params with query above
+    var path = 'routers/default/isochrone?' + this._otpRequestParams + '&algoritm=accSampling&precisionMeters=100';
+
+    // TODO: share step/min value with index.html
+    // request an isochrone for each 15 minute increment
+    for (var i = 15; i < 90; i += 15) {
+      path += '&cutoffSec=' + i * 60;
+    }
+
+    console.log('going to query isochrones from: ' + path);
+
     // TODO: spacing here should come from the slider step value
-    var path = 'surfaces/' + surfaceId + '/isochrone?spacing=15&nMax=' + this._cutoffMinutes;
+    //var path = 'surfaces/' + surfaceId + '/isochrone?spacing=15&nMax=' + this._cutoffMinutes;
     this._getJSON(path, function(isochrones) {
 
       self._isochronesLayer.clearLayers();
       self._isochrones = [];
 
       isochrones.features.forEach(function(feature) {
+        console.log('found a feature with properties:');
+        console.log(feature.properties);
         var minutes = parseInt(feature.properties['time'] / 60);
+        console.log('adding feature to minutes ' + minutes);
         self._isochrones[minutes] = feature;
       });
 
       self._displayIsochrone(self._isochroneMinutes);
 
     });
-    */
+    
   },
 
   updateTime: function(minutes) {
