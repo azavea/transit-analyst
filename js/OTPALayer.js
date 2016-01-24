@@ -178,8 +178,10 @@ L.OTPALayer = L.FeatureGroup.extend({
     var self = this;
     var path = 'surfaces?'
         + 'fromPlace=' + location.lat + ',' + location.lng
+        + '&date=2016-01-20&time=06:00pm'
+        + '&maxWalkDistance=3218.69' // 2 mi
         + '&cutoffMinutes=' + this._cutoffMinutes
-        + '&mode=WALK,TRANSIT'
+        + '&mode=TRANSIT,WALK'
         + '&batch=true';
 
     self._postJSON(path, function(json) {
