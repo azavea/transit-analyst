@@ -225,13 +225,19 @@ L.OTPALayer = L.FeatureGroup.extend({
   },
 
   updateTime: function(minutes) {
-    this._isochroneMinutes = minutes;
+    var self = this;
 
     var dfd = $.Deferred();
-    this._showFilteredPointset(minutes);
+    self._isochroneMinutes = minutes;
 
-    return dfd.promise();
-  },
+    var debounced = _.debounce(function(mins) {
+      self._showFilteredPointset(minutes);
+      dfd.resolve(mins);
+    }, 150, {'trailing': true})
+
+     debounced(minutes);
+     return dfd.promise();
+   },
 
   _getPointsets: function(callback) {
     var path = 'pointsets';
