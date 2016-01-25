@@ -59,9 +59,9 @@
         tileUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
         range = {
           value: 30,
-          min: 15,
+          min: 1,
           max: 90,
-          step: 15
+          step: 1
         },
         philly = [39.952671, -75.165475],
         graphTypes = [
@@ -139,9 +139,7 @@
         isochroneMinutes: range.value,
         spinner: '#spinner',
         pointset: pointset,
-        location: philly,
-        smoothFactor: 0.25,
-        noClip: true
+        location: philly
       }).on('pointsets', function(e) {
         d3.select('#pointsets').selectAll('option')
             .data(e.data).enter()
