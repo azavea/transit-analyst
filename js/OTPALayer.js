@@ -220,7 +220,7 @@ L.OTPALayer = L.FeatureGroup.extend({
       map.removeLayer(this._surfaceLayer);
     }
 
-    var tileUrl = 'http://localhost:8080/otp/surfaces/' + surfaceId + '/isotiles/{z}/{x}/{y}.png';
+    var tileUrl = this._endpoint + 'surfaces/' + surfaceId + '/isotiles/{z}/{x}/{y}.png';
     self._surfaceLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(map);
   },
 
