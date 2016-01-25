@@ -55,42 +55,35 @@ L.OTPALayer = L.FeatureGroup.extend({
     });
     map.addLayer(this._locationLayer);
 
-    var lastLayer = null;
-    var onEachPoint = function(style) {
-      return function(feature, layer) {
-        layer.on({
-            mouseover: function highlightFeature(e) {
+    var onEachPoint = function(feature, layer) {
+      layer.on({
+        mouseover: function (e) {
+          self._highlightedLayer.clearLayers();
+          self._highlightedLayer.addData(feature);
 
-              var layer = e.target;
-
-              if (lastLayer) {
-                  lastLayer.setStyle(style());
-              }
-              layer.setStyle(self._highlightedPointsetStyle());
-              layer.bringToFront();
-
-              self.fireEvent('select', {data: layer.feature.properties});
-            },
-
-            mouseout: function resetHighlight(e) {
-              lastLayer = layer;
-            }
-        });
-      }
+          self.fireEvent('select', {data: layer.feature.properties});
+        },
+      });
     }
 
     this._pointsetLayer = L.geoJson([], {
       pointToLayer: function (feature, latlng) {
           return L.circleMarker(latlng, self._pointsetStyle());
       },
-      onEachFeature: onEachPoint(self._pointsetStyle)
+      onEachFeature: onEachPoint
     }).addTo(map);
 
     this._filteredPointsetLayer = L.geoJson([], {
       pointToLayer: function (feature, latlng) {
           return L.circleMarker(latlng, self._filteredPointsetStyle());
       },
-      onEachFeature: onEachPoint(self._filteredPointsetStyle)
+      onEachFeature: onEachPoint
+    }).addTo(map);
+
+    this._highlightedLayer = L.geoJson([], {
+      pointToLayer: function (feature, latlng) {
+          return L.circleMarker(latlng, self._highlightedPointsetStyle());
+      }
     }).addTo(map);
 
     this._surfaceLayer = null;
@@ -231,6 +224,9 @@ L.OTPALayer = L.FeatureGroup.extend({
             }
         });
     }
+    // Needto bring the highlighted point (if any) to the front after reshowing
+    // filtered points, as they will be obscuring it now
+    this._highlightedLayer.bringToFront();
   },
 
   _getIsochrones: function(surfaceId) {
