@@ -107,7 +107,7 @@ L.OTPALayer = L.FeatureGroup.extend({
   setLocation: function (latlng) {
     var self = this;
     self._location = latlng;
-    self._createSurface(self._location, false).then(self.updateTime(this._isochroneMinutes));
+    self._createSurface(self._location, false);
   },
 
   setPointset: function (pointset) {
@@ -220,6 +220,7 @@ L.OTPALayer = L.FeatureGroup.extend({
   _showFilteredPointset: function(minutes) {
     var self = this;
 
+    console.log('filter');
     // Draw the filtered pointset layer based on what fits inside the isochrone
     var matches = 0;
     if (self._pointsetData) {
