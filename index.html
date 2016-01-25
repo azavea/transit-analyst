@@ -12,7 +12,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.0.0/lodash.min.js"></script>
   <script src="js/d3.min.js" charset="utf-8"></script>
-  <script src="js/leaflet-pip.js" charset="utf-8"></script>
   <script src="js/OTPAGraph.js" charset="utf-8"></script>
   <script src="js/OTPAGraphLine.js" charset="utf-8"></script>
   <script src="js/OTPAGraphBar.js" charset="utf-8"></script>
@@ -101,9 +100,11 @@
         range.value = value;
         d3.select('#minutes').html(value); // replace span with # of minutes
 
-        otpaLayer.updateTime(value).then(function(mins) {
-          update(indicators, mins * 60);
-        });
+        // update the graph immediately
+        update(indicators, value * 60);
+
+        // tell the layer about the change
+        otpaLayer.updateTime(value);
       });
 
     d3.select('#graph-type').selectAll('option')
@@ -152,10 +153,8 @@
         if (indicators) {
           indicatorKeys = Object.keys(indicators.data);
         }
-        //var indicatorKeys = Object.keys(indicators.features[0].properties.structured);
         var options = d3.select('#indicators').selectAll('option')
           .data(indicatorKeys, function(d) { return d; })
-
         options.enter()
           .append('option')
             .attr('value', function(d) { return d; })
@@ -163,6 +162,8 @@
         options.exit().remove();
 
         update(indicators, range.value * 60);
+        // filter points on initial page load
+        otpaLayer.updateTime(range.value * 60);
       }).on('select', function(e) {
           $('#info').html(infoTemplate({data: e.data.structured}));
       }).on('unselect', function(e) {

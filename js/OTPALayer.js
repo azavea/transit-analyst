@@ -201,7 +201,6 @@ L.OTPALayer = L.FeatureGroup.extend({
     var self = this;
 
     // Draw the filtered pointset layer based on what fits inside the isochrone
-
     var matches = 0;
     if (self._pointsetData) {
         self._filteredPointsetLayer.clearLayers();
@@ -224,20 +223,16 @@ L.OTPALayer = L.FeatureGroup.extend({
     self._surfaceLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(map);
   },
 
+  _debouncedFilter: _.debounce(function(minutes) {
+      this._showFilteredPointset(minutes);
+    }, 150, {'trailing': true}
+  ),
+
   updateTime: function(minutes) {
     var self = this;
-
-    var dfd = $.Deferred();
     self._isochroneMinutes = minutes;
-
-    var debounced = _.debounce(function(mins) {
-      self._showFilteredPointset(minutes);
-      dfd.resolve(mins);
-    }, 150, {'trailing': true})
-
-     debounced(minutes);
-     return dfd.promise();
-   },
+    self._debouncedFilter(minutes);
+  },
 
   _getPointsets: function(callback) {
     var path = 'pointsets';
