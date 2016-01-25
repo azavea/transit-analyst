@@ -49,32 +49,34 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     // When layer is added to map, also add LocationLayer
     // TODO: remove locationlayer when this layer is removed!
-    this._locationLayer = L.marker(self._location, {'draggable': true})
-        .on('dragend', function(e) {
-          self.setLocation(e.target._latlng); // UPDATES ISOCHRONE WHEN PIN MOVED
-        }).addTo(map);
+    this._locationLayer = new L.marker(self._location, {'draggable': true});
+    this._locationLayer.on('dragend', function(e) {
+      self.setLocation(self._locationLayer.getLatLng()); // UPDATES ISOCHRONE WHEN PIN MOVES
+    });
+    map.addLayer(this._locationLayer);
 
     var lastLayer = null;
     var onEachPoint = function(style) {
-        return function(feature, layer) {
-          layer.on({
-              mouseover: function highlightFeature(e) {
-                  var layer = e.target;
+      return function(feature, layer) {
+        layer.on({
+            mouseover: function highlightFeature(e) {
 
-                  if (lastLayer) {
-                      lastLayer.setStyle(style());
-                  }
-                  layer.setStyle(self._highlightedPointsetStyle());
-                  layer.bringToFront();
+              var layer = e.target;
 
-                  self.fireEvent('select', {data: layer.feature.properties});
-              },
-
-              mouseout: function resetHighlight(e) {
-                  lastLayer = layer;
+              if (lastLayer) {
+                  lastLayer.setStyle(style());
               }
-          });
-        }
+              layer.setStyle(self._highlightedPointsetStyle());
+              layer.bringToFront();
+
+              self.fireEvent('select', {data: layer.feature.properties});
+            },
+
+            mouseout: function resetHighlight(e) {
+              lastLayer = layer;
+            }
+        });
+      }
     }
 
     this._pointsetLayer = L.geoJson([], {
@@ -159,30 +161,48 @@ L.OTPALayer = L.FeatureGroup.extend({
   _createSurface: function(location, getPointset) {
     var self = this;
 
+    var dfd = $.Deferred();
+
     this._otpRequestParams = 'fromPlace=' + location.lat + ',' + location.lng
         + '&date=2016-01-20&time=06:00pm'
         + '&maxWalkDistance=3218.69' // 2 mi
         + '&mode=TRANSIT,WALK';
 
-    var path = 'surfaces?' 
+    var path = 'surfaces?'
         + this._otpRequestParams
         + '&cutoffMinutes=' + this._cutoffMinutes
         + '&batch=true';
 
     self._postJSON(path, function(json) {
 
-      if (getPointset && self._pointset) {
-        self._getPointset(self._pointset);
-      }
-
       if (json && json.id) {
         self._surface = json;
-        self._getIsochrones(json.id);
-        if (self._pointset) {
-          self._getIndicator(json.id, self._pointset);
+      }
+
+      if (getPointset && self._pointset) {
+        self._getPointset(self._pointset).then(function() {
+          if (json && json.id) {
+            self._updateIsochronesIndicators(json.id);
+          }
+          dfd.resolve();
+        });
+      } else {
+        if (json && json.id) {
+          self._updateIsochronesIndicators(json.id);
         }
+        dfd.resolve();
       }
     });
+
+    return dfd.promise();
+  },
+
+  _updateIsochronesIndicators: function(surfaceId) {
+    var self = this;
+    self._getIsochrones(surfaceId);
+    if (self._pointset) {
+      self._getIndicator(surfaceId, self._pointset);
+    }
   },
 
   _getIndicator: function(surfaceId, pointset) {
@@ -200,8 +220,8 @@ L.OTPALayer = L.FeatureGroup.extend({
   _showFilteredPointset: function(minutes) {
     var self = this;
 
+    console.log('filter');
     // Draw the filtered pointset layer based on what fits inside the isochrone
-
     var matches = 0;
     if (self._pointsetData) {
         self._filteredPointsetLayer.clearLayers();
@@ -224,35 +244,36 @@ L.OTPALayer = L.FeatureGroup.extend({
     self._surfaceLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(map);
   },
 
+  _debouncedFilter: _.debounce(function(minutes) {
+      this._showFilteredPointset(minutes);
+    }, 150, {'trailing': true}
+  ),
+
   updateTime: function(minutes) {
     var self = this;
-
-    var dfd = $.Deferred();
     self._isochroneMinutes = minutes;
-
-    var debounced = _.debounce(function(mins) {
-      self._showFilteredPointset(minutes);
-      dfd.resolve(mins);
-    }, 150, {'trailing': true})
-
-     debounced(minutes);
-     return dfd.promise();
-   },
+    self._debouncedFilter(minutes);
+  },
 
   _getPointsets: function(callback) {
     var path = 'pointsets';
-    this._getJSON(path, callback);
+    return this._getJSON(path, callback);
   },
 
   _getPointset: function(pointset) {
     var self = this;
+    var dfd = $.Deferred();
+
     var path = 'pointsets/' + this._pointset;
     this._getJSON(path, function(pointset) {
       // TODO: have total count here as "n"; use for graph totals, if summary
       // (have modified backend to always return all as geojson, instead of summary if > 200)
       self._pointsetData = pointset;
       self._pointsetLayer.addData(pointset);
+      dfd.resolve();
     });
+
+    return dfd.promise();
   },
 
   _postJSON: function(path, callback) {
