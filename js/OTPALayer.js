@@ -93,27 +93,7 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     this._surfaceLayer = null;
 
-    this._isochronesLayer = L.geoJson([], {
-      style: function(feature) {
-        var style = {
-          color: '#333',
-          fillColor: '#333',
-          lineCap: 'round',
-          lineJoin: 'round',
-          weight: 2,
-          //dashArray: '5, 4',
-          fillOpacity: '0.1'
-        };
-        if (feature.properties['time'] == self._cutoffMinutes * 60) {
-          style.weight = 1;
-        }
-        return style;
-      }
-    }).addTo(map);
-
     self.addLayer(this._locationLayer);
-
-    self.addLayer(this._isochronesLayer);
 
     self.addLayer(this._pointsetLayer);
 
@@ -146,19 +126,19 @@ L.OTPALayer = L.FeatureGroup.extend({
   _pointsetStyle: function() {
     return {
       radius: 4,
-      fillColor: "#000",
-      color: "#000",
+      fillColor: "#777",
+      color: "#777",
       weight: 1,
-      opacity: 0.5,
-      fillOpacity: 0.3
+      opacity: 1,
+      fillOpacity: 0.8
     };
   },
 
   _filteredPointsetStyle: function() {
     return {
       radius: 4,
-      fillColor: "#90EE90",
-      color: "#90EE90",
+      fillColor: "#000",
+      color: "#ddd",
       weight: 1,
       opacity: 1,
       fillOpacity: 0.8
@@ -213,73 +193,24 @@ L.OTPALayer = L.FeatureGroup.extend({
     this._getJSON(path, function(indicator) {
       self._indicator = indicator;
       self.fireEvent('change', {data: indicator});
+      self._showFilteredPointset(self._isochroneMinutes);
     });
   },
 
-  _displayIsochrone: function(minutes) {
+  _showFilteredPointset: function(minutes) {
     var self = this;
-
-    console.log('have selected isochrone for minutes: ' + minutes);
-
-    if (!self._isochrones) {
-      console.error('no isochrones to display from!');
-      return;
-    }
-
-    var layer = self._isochrones[minutes];
-
-    if (!layer) {
-      console.error('no isochrone found for ' + minutes + ' minutes!');
-
-      // go get it lazily here
-      var path = 'routers/default/isochrone?' + this._otpRequestParams
-        + '&algoritm=accSampling'
-        + '&precisionMeters=75'
-        + '&cutoffSec=' + minutes * 60;
-
-      console.log('going to query isochrones from: ' + path);
-
-      // TODO: spacing here should come from the slider step value
-      //var path = 'surfaces/' + surfaceId + '/isochrone?spacing=15&nMax=' + this._cutoffMinutes;
-      this._getJSON(path, function(isochrones) {
-
-        self._isochronesLayer.clearLayers();
-
-        isochrones.features.forEach(function(feature) {
-          console.log('found a feature with properties:');
-          console.log(feature.properties);
-          var minutes = parseInt(feature.properties['time'] / 60);
-          console.log('adding feature to minutes ' + minutes);
-          self._isochrones[minutes] = feature;
-        });
-
-        // try again
-        self._displayIsochrone(self._isochroneMinutes);
-
-      });
-
-      return;
-    }
-
-    self._isochronesLayer.clearLayers();
-    self._isochronesLayer.addData(layer);
 
     // Draw the filtered pointset layer based on what fits inside the isochrone
 
-    /*
     var matches = 0;
     if (self._pointsetData) {
         self._filteredPointsetLayer.clearLayers();
         self._pointsetData.features.forEach(function(feature) {
-            var matchingPolygons = leafletPip.pointInLayer(feature.geometry.coordinates, self._isochronesLayer);
-            if (matchingPolygons.length > 0) {
+            if (self._indicator && self._indicator.times[+feature.id] / 60 < self._isochroneMinutes) {
                 self._filteredPointsetLayer.addData(feature);
-                matches += matchingPolygons.length;
             }
         });
-        console.log('found ' + matches + ' points in polygon');
     }
-    */
   },
 
   _getIsochrones: function(surfaceId) {
@@ -291,55 +222,14 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     var tileUrl = 'http://localhost:8080/otp/surfaces/' + surfaceId + '/isotiles/{z}/{x}/{y}.png';
     self._surfaceLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(map);
-
-    // instead of using analyst isochrone endpoint, use the normal isochrone endpoint
-    // share some of these params with query above
-    var path = 'routers/default/isochrone?' + this._otpRequestParams
-      + '&algoritm=accSampling'
-      + '&precisionMeters=75'
-      + '&cutoffSec=' + self._isochroneMinutes * 60;
-
-    // TODO: share step/min value with index.html
-    // request an isochrone for each 15 minute increment
-    //for (var i = 15; i < 90; i += 15) {
-    //  path += '&cutoffSec=' + i * 60;
-    //}
-
-    console.log('going to query isochrones from: ' + path);
-
-    // TODO: spacing here should come from the slider step value
-    //var path = 'surfaces/' + surfaceId + '/isochrone?spacing=15&nMax=' + this._cutoffMinutes;
-    this._getJSON(path, function(isochrones) {
-
-      self._isochronesLayer.clearLayers();
-      self._isochrones = [];
-
-      isochrones.features.forEach(function(feature) {
-        console.log('found a feature with properties:');
-        console.log(feature.properties);
-        var minutes = parseInt(feature.properties['time'] / 60);
-        console.log('adding feature to minutes ' + minutes);
-        self._isochrones[minutes] = feature;
-      });
-
-      self._displayIsochrone(self._isochroneMinutes);
-
-    });
-    
   },
 
   updateTime: function(minutes) {
-    var self = this;
+    this._isochroneMinutes = minutes;
 
     var dfd = $.Deferred();
+    this._showFilteredPointset(minutes);
 
-    var debounced = _.debounce(function(mins) {
-      self._isochroneMinutes = minutes;
-      self._displayIsochrone(minutes);
-      dfd.resolve(mins);
-    }, 250, {'trailing': true})
-
-    debounced(minutes);
     return dfd.promise();
   },
 
