@@ -50,36 +50,27 @@ d3.otpaGraphBar = function module() {
           // Compute scales/domain/etc.
           // TODO: use d3.extent instead?
           var countMax = 0;
+    
+          var minuteOffset = (d.seconds / 60) - 1;
+          if (minuteOffset < 0) {
+            minuteOffset = 0;
+        }
 
-    console.log('d.seconds is ' + d.seconds);
-    console.log('attributes with indicator ' + indicator + ' is:');
-    console.log(d.attributes); // has sums and counts
-  
-    var minuteOffset = (d.seconds / 60) - 1;
-    if (minuteOffset < 0) {
-      minuteOffset = 0;
-    }
+        if (!d.attributes) {
+          return {value: 0, total: 0};
+        }
 
-    if (!d.attributes) {
-      return {value: 0, total: 0};
-    }
+        var data = Object.keys(d.attributes).map(function(indicator) {
+          var thisMax = _.max(d.attributes[indicator]);
+          countMax = Math.max(countMax, thisMax);
+          return {value: d.attributes[indicator][minuteOffset], total: thisMax};
+        });
 
-    //var totalMax = 0;
+      y.domain([0, countMax]);
+      x.domain(Object.keys(d.attributes))
 
-    var data = Object.keys(d.attributes).map(function(indicator) {
-      countMax = Math.max(countMax, d.attributes[indicator][d.attributes[indicator].length - 1]);
-      //totalMax = Math.max(totalMax, countMax);
-      return {value: d.attributes[indicator][minuteOffset], total: countMax};
+      return data;
     });
-
-    console.log('countMax: ' + countMax);
-    console.log('keys: ' + Object.keys(d.attributes));
-
-    y.domain([0, countMax]);
-    x.domain(Object.keys(d.attributes))
-
-    return data;
-  });
 
     // Bar - enter
     var barGroup = barGroups.enter().append('g')
