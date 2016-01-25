@@ -94,26 +94,15 @@ L.OTPALayer = L.FeatureGroup.extend({
     this._surfaceLayer = null;
 
     this._isochronesLayer = L.geoJson([], {
-      /*
-      style: {
-        color: 'red',
-        smoothFactor: 0.5,
-        noClip: true
-      }
-      */
       style: function(feature) {
         var style = {
-          smoothFactor: 0.7,
-          noClip: true,
           color: '#333',
           fillColor: '#333',
           lineCap: 'round',
           lineJoin: 'round',
           weight: 2,
           //dashArray: '5, 4',
-          fillOpacity: '0.1',
-          smoothFactor: 0.25,
-          noClip: true,
+          fillOpacity: '0.1'
         };
         if (feature.properties['time'] == self._cutoffMinutes * 60) {
           style.weight = 1;
