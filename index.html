@@ -122,7 +122,7 @@
 
     d3.select('#pointsets').on("change", function() {
       pointset = d3.event.target.value;
-      otpaLayer.setPointset(pointset); // TODO reference layer before create?
+      otpaLayer.setPointset(pointset);
       update(indicators, range.value * 60)
     });
 

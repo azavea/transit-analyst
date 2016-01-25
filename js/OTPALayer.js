@@ -49,32 +49,34 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     // When layer is added to map, also add LocationLayer
     // TODO: remove locationlayer when this layer is removed!
-    this._locationLayer = L.marker(self._location, {'draggable': true})
-        .on('dragend', function(e) {
-          self.setLocation(e.target._latlng); // UPDATES ISOCHRONE WHEN PIN MOVED
-        }).addTo(map);
+    this._locationLayer = new L.marker(self._location, {'draggable': true});
+    this._locationLayer.on('dragend', function(e) {
+      self.setLocation(self._locationLayer.getLatLng()); // UPDATES ISOCHRONE WHEN PIN MOVES
+    });
+    map.addLayer(this._locationLayer);
 
     var lastLayer = null;
     var onEachPoint = function(style) {
-        return function(feature, layer) {
-          layer.on({
-              mouseover: function highlightFeature(e) {
-                  var layer = e.target;
+      return function(feature, layer) {
+        layer.on({
+            mouseover: function highlightFeature(e) {
 
-                  if (lastLayer) {
-                      lastLayer.setStyle(style());
-                  }
-                  layer.setStyle(self._highlightedPointsetStyle());
-                  layer.bringToFront();
+              var layer = e.target;
 
-                  self.fireEvent('select', {data: layer.feature.properties});
-              },
-
-              mouseout: function resetHighlight(e) {
-                  lastLayer = layer;
+              if (lastLayer) {
+                  lastLayer.setStyle(style());
               }
-          });
-        }
+              layer.setStyle(self._highlightedPointsetStyle());
+              layer.bringToFront();
+
+              self.fireEvent('select', {data: layer.feature.properties});
+            },
+
+            mouseout: function resetHighlight(e) {
+              lastLayer = layer;
+            }
+        });
+      }
     }
 
     this._pointsetLayer = L.geoJson([], {
