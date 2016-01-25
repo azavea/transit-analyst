@@ -105,7 +105,7 @@ L.OTPALayer = L.FeatureGroup.extend({
   setLocation: function (latlng) {
     var self = this;
     self._location = latlng;
-    self._createSurface(self._location, false);
+    self._createSurface(self._location, false).then(self.updateTime(this._isochroneMinutes));
   },
 
   setPointset: function (pointset) {
@@ -159,30 +159,48 @@ L.OTPALayer = L.FeatureGroup.extend({
   _createSurface: function(location, getPointset) {
     var self = this;
 
+    var dfd = $.Deferred();
+
     this._otpRequestParams = 'fromPlace=' + location.lat + ',' + location.lng
         + '&date=2016-01-20&time=06:00pm'
         + '&maxWalkDistance=3218.69' // 2 mi
         + '&mode=TRANSIT,WALK';
 
-    var path = 'surfaces?' 
+    var path = 'surfaces?'
         + this._otpRequestParams
         + '&cutoffMinutes=' + this._cutoffMinutes
         + '&batch=true';
 
     self._postJSON(path, function(json) {
 
-      if (getPointset && self._pointset) {
-        self._getPointset(self._pointset);
-      }
-
       if (json && json.id) {
         self._surface = json;
-        self._getIsochrones(json.id);
-        if (self._pointset) {
-          self._getIndicator(json.id, self._pointset);
+      }
+
+      if (getPointset && self._pointset) {
+        self._getPointset(self._pointset).then(function() {
+          if (json && json.id) {
+            self._updateIsochronesIndicators(json.id);
+          }
+          dfd.resolve();
+        });
+      } else {
+        if (json && json.id) {
+          self._updateIsochronesIndicators(json.id);
         }
+        dfd.resolve();
       }
     });
+
+    return dfd.promise();
+  },
+
+  _updateIsochronesIndicators: function(surfaceId) {
+    var self = this;
+    self._getIsochrones(surfaceId);
+    if (self._pointset) {
+      self._getIndicator(surfaceId, self._pointset);
+    }
   },
 
   _getIndicator: function(surfaceId, pointset) {
@@ -236,18 +254,23 @@ L.OTPALayer = L.FeatureGroup.extend({
 
   _getPointsets: function(callback) {
     var path = 'pointsets';
-    this._getJSON(path, callback);
+    return this._getJSON(path, callback);
   },
 
   _getPointset: function(pointset) {
     var self = this;
+    var dfd = $.Deferred();
+
     var path = 'pointsets/' + this._pointset;
     this._getJSON(path, function(pointset) {
       // TODO: have total count here as "n"; use for graph totals, if summary
       // (have modified backend to always return all as geojson, instead of summary if > 200)
       self._pointsetData = pointset;
       self._pointsetLayer.addData(pointset);
+      dfd.resolve();
     });
+
+    return dfd.promise();
   },
 
   _postJSON: function(path, callback) {

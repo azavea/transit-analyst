@@ -162,8 +162,6 @@
         options.exit().remove();
 
         update(indicators, range.value * 60);
-        // filter points on initial page load
-        otpaLayer.updateTime(range.value * 60);
       }).on('select', function(e) {
           $('#info').html(infoTemplate({data: e.data.structured}));
       }).on('unselect', function(e) {
