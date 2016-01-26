@@ -221,7 +221,9 @@ L.OTPALayer = L.FeatureGroup.extend({
     if (self._pointsetData) {
         self._filteredPointsetLayer.clearLayers();
         self._pointsetData.features.forEach(function(feature) {
-            if (self._indicator && self._indicator.times[+feature.id] / 60 < self._isochroneMinutes) {
+            if (self._indicator &&
+                self._indicator.times[feature.id] > 0 &&
+                self._indicator.times[feature.id] / 60 < self._isochroneMinutes) {
                 self._filteredPointsetLayer.addData(feature);
             }
         });
