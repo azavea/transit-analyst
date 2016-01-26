@@ -8,8 +8,8 @@ d3.otpaGraphBar = function module() {
   "use strict";
 
   // Private variables
-  var margin = {top: 20, right: 20, bottom: 30, left: 75},
-      width = 500 - margin.left - margin.right,
+  var margin = {top: 20, right: 0, bottom: 30, left: 125},
+      width = 480 - margin.left - margin.right,
       height = 350 - margin.top - margin.bottom,
       barGap = 20, // including text
       axisHeight = 50,
@@ -50,7 +50,7 @@ d3.otpaGraphBar = function module() {
           // Compute scales/domain/etc.
           // TODO: use d3.extent instead?
           var countMax = 0;
-    
+
           var minuteOffset = (d.seconds / 60) - 1;
           if (minuteOffset < 0) {
             minuteOffset = 0;
