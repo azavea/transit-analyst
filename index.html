@@ -49,14 +49,7 @@
   <script type="text/template" id="info-template">
     <h4><%= label %></h4>
     <label><%= description %></label>
-    <table>
-      <tr>
-      <% _.forIn(data, function(value, key) { %>
-        <td><%= key %></td>
-        <td><%= value %></td>
-      <% }); %>
-      </tr>
-    </table>
+    <h4><%= indicator %>: <%= value %></h4>
   </div>
   </script>
   <script>
@@ -169,10 +162,12 @@
 
         update(indicators, range.value * 60);
       }).on('select', function(e) {
+          var selectedIndicator = d3.select('#indicators').property('value');
           $('#info').html(infoTemplate({
             label: e.data.label,
             description: e.data.description,
-            data: e.data.structured
+            indicator: selectedIndicator,
+            value: e.data.structured[selectedIndicator]
           }));
       }).on('unselect', function(e) {
           $('#info').html('');
