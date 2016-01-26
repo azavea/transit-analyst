@@ -106,8 +106,11 @@ L.OTPALayer = L.FeatureGroup.extend({
   setPointset: function (pointset) {
     var self = this;
     self._pointset = pointset;
-    // TODO: check if pointset is in self._pointsets
-    self._getIndicator(self._surface.id, self._pointset);
+    self._getPointset(self._pointset).then(function() {
+      if (self._surface && self._surface.id) {
+        self._updateIsochronesIndicators(self._surface.id);
+      }
+    });
   },
 
   setTimeLimit: function (timeLimit) {
@@ -213,7 +216,6 @@ L.OTPALayer = L.FeatureGroup.extend({
   _showFilteredPointset: function(minutes) {
     var self = this;
 
-    console.log('filter');
     // Draw the filtered pointset layer based on what fits inside the isochrone
     var matches = 0;
     if (self._pointsetData) {
@@ -265,6 +267,11 @@ L.OTPALayer = L.FeatureGroup.extend({
       // TODO: have total count here as "n"; use for graph totals, if summary
       // (have modified backend to always return all as geojson, instead of summary if > 200)
       self._pointsetData = pointset;
+      self._pointsetLayer.clearLayers();
+      self._filteredPointsetLayer.clearLayers();
+      self._highlightedLayer.clearLayers();
+      self.fireEvent('unselect');
+
       self._pointsetLayer.addData(pointset);
       dfd.resolve();
     });
