@@ -160,6 +160,9 @@
             .html(function(d) { return d; });
         options.exit().remove();
 
+        indicator = d3.select('#indicators').property('value');
+
+        d3.select('#graph').selectAll('.otpa-graph').remove();
         update(indicators, range.value * 60);
       }).on('select', function(e) {
           var selectedIndicator = d3.select('#indicators').property('value');
