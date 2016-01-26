@@ -269,6 +269,9 @@ L.OTPALayer = L.FeatureGroup.extend({
       self._pointsetData = pointset;
       self._pointsetLayer.clearLayers();
       self._filteredPointsetLayer.clearLayers();
+      self._highlightedLayer.clearLayers();
+      self.fireEvent('unselect');
+
       self._pointsetLayer.addData(pointset);
       dfd.resolve();
     });
