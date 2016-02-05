@@ -1,0 +1,22 @@
+{
+  "name": "otpa-web",
+  "version": "0.0.0",
+  "description": "otpa-web ========",
+  "main": "tiler.js",
+  "dependencies": {
+    "windshaft": "^0.36.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flibbertigibbet/otpa-web.git"
+  },
+  "author": "",
+  "license": "None",
+  "bugs": {
+    "url": "https://github.com/flibbertigibbet/otpa-web/issues"
+  }
+}
