@@ -54,7 +54,8 @@
   </script>
   <script>
     var endpoint = 'http://localhost:8080/otp/',
-        tileUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        tileUrl = 'http://localhost:4000/tiles/{z}/{x}/{y}.png',
+        basemapUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
         range = {
           value: 30,
           min: 1,
@@ -84,9 +85,11 @@
 
     var map = L.map('map').setView(philly, 12);
 
-    L.tileLayer(tileUrl, {
+    L.tileLayer(basemapUrl, {
       maxZoom: 18
     }).addTo(map);
+
+    L.tileLayer(tileUrl).addTo(map);
 
     d3.select('#slider').append('input')
       .attr('type', 'range')
