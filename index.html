@@ -12,6 +12,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.0.0/lodash.min.js"></script>
   <script src="js/d3.min.js" charset="utf-8"></script>
+  <script src="js/leaflet.utfgrid.js" charset="utf-8"></script>
   <script src="js/OTPAGraph.js" charset="utf-8"></script>
   <script src="js/OTPAGraphBar.js" charset="utf-8"></script>
 
@@ -55,6 +56,7 @@
   <script>
     var endpoint = 'http://localhost:8080/otp/',
         tileUrl = 'http://localhost:4000/tiles/{z}/{x}/{y}.png',
+        gridUrl = 'http://localhost:4000/tiles/{z}/{x}/{y}.grid.json',
         basemapUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
         range = {
           value: 30,
@@ -89,7 +91,19 @@
       maxZoom: 18
     }).addTo(map);
 
-    L.tileLayer(tileUrl).addTo(map);
+    var tileLayer = L.tileLayer(tileUrl);
+    tileLayer.addTo(map);
+
+    var highlightedPolygon = L.geoJson([], {
+    }).addTo(map);
+
+    var gridLayer = new L.UtfGrid(gridUrl, {useJsonP: false});
+    gridLayer.on('mouseover', function(e) {
+        var geojson = JSON.parse(e.data.geojson);
+        highlightedPolygon.clearLayers();
+        highlightedPolygon.addData(geojson);
+    });
+    map.addLayer(gridLayer);
 
     d3.select('#slider').append('input')
       .attr('type', 'range')
@@ -177,7 +191,7 @@
           }));
       }).on('unselect', function(e) {
           $('#info').html('');
-    }).addTo(map);
+    });
 
     // update() calls otpaGraph with a DOM selection as a parameter.
     // otpaGraph chains the call through to a specific graph type.
