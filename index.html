@@ -40,6 +40,7 @@
         <tr><td>Indicators:</td><td><select id="indicators"></div></td>
       </table>
       <div id="graph"></div>
+      <div id="block-info"></div>
     </div>
   </div>
   <div id="info-box" class="leaflet-bar">
@@ -49,7 +50,19 @@
   </div>
   <script type="text/template" id="block-template">
     <h4>Census Block <%= geoid10 %></h4>
-    <a id='toggle-travelshed' style="width: 100%;" href="#load-isochrone" data-lat="<%= lat %>" data-lng="<%= lng %>">Show Travelshed</a>
+    <a href="#" id='toggle-travelshed' style="width: 100%;" data-lat="<%= lat %>" data-lng="<%= lng %>">Show Travelshed</a>
+    <ul>
+    <% _.each(bools, function(item) { %>
+      <li>
+        <%= item.label %>
+      </li>
+    <% }); %>
+    <% _.each(data, function(item) { %>
+      <li>
+        <%= item.label %> : <%= item.value %>
+      </li>
+    <% }); %>
+    </ul>
   </div>
   </script>
   <script type="text/template" id="info-template">
@@ -59,9 +72,9 @@
   </div>
   </script>
   <script>
-    var endpoint = 'http://otp.transitanalyst.com/otp/',
+    var endpoint = 'http://192.168.96.84:8080/otp/',
         basemapUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-        blockTileBaseUrl = 'http://transitanalyst.com/tiles/';
+        blockTileBaseUrl = 'http://192.168.96.84:4000/tiles/';
         range = {
           value: 30,
           min: 1,
@@ -81,7 +94,35 @@
         indicators = {},
         graphType = graphTypes[0].type,
         visWidth = 300,
-        otpaGraph = d3.otpaGraph().type(graphType).width(visWidth);
+        otpaGraph = d3.otpaGraph().type(graphType).width(visWidth),
+
+        dataLabels = [
+            ['recap_10', 'Is a RECAP neighborhood'],
+            ['promise_neighborhood', 'Is a promise neighborhood'],
+            ['choice_neighborhood', 'Is a choice neighborhood'],
+        ],
+        datasetLabels = {
+            'cornerstores.geo': [
+                ['cornerstore_access_pct_rank', 'Cornerstore %'],
+                ['cornerstore_access', 'Cornerstore accessibility'],
+            ],
+            'headstart.geo': [
+                ['headstart_access_pct_rank', 'Headstart center %'],
+                ['headstart_access', 'Headstart center accessibility'],
+            ],
+            'healthcare.geo': [
+                ['healthcare_access_pct_rank', 'Health Clinic %'],
+                ['healthcare_access', 'Health Clinic accessibility'],
+            ],
+            'rec.geo': [
+                ['rec_access_pct_rank', 'Recreation Center %'],
+                ['rec_access', 'Recreation Center accessibility'],
+            ],
+            'playgrounds.geo': [
+                ['playground_access_pct_rank', 'Playgrounds %'],
+                ['playground_access', 'Playgrounds accessibility'],
+            ],
+        };
 
     // Use location hash to specify URL of OTPA endpoint:
     // http://localhost:8080/#192.168.1.103:8080/otp/
@@ -98,6 +139,8 @@
     var blockTileLayer = null;
     var gridLayer = null;
     var highlightedPolygon = null;
+    var clickedBlockData = null;
+    var clickedPolygon = L.geoJson([], {}).addTo(map);
 
     function updateBlockTiles(pointset) {
       var blockTileUrl = blockTileBaseUrl + pointset + '/{z}/{x}/{y}.png';
@@ -116,14 +159,14 @@
       }
 
       var lastHoveredBlockData = null;
+
       highlightedPolygon = L.geoJson([], {}).addTo(map);
 
       highlightedPolygon.on('click', function(e) {
-        if (lastHoveredBlockData) {
-          console.log(lastHoveredBlockData);
-          // TODO: show info in place of bar graph
-          d3.select('#graph').selectAll('.otpa-graph').remove();
-        }
+        clickedBlockData = lastHoveredBlockData;
+        updateBlockInfo();
+        clickedPolygon.clearLayers();
+        clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
       });
 
       gridLayer = new L.UtfGrid(blockTileBaseUrl + pointset + '/{z}/{x}/{y}.grid.json', {useJsonP: false});
@@ -132,15 +175,34 @@
         var geojson = JSON.parse(e.data.geojson);
         highlightedPolygon.clearLayers();
         highlightedPolygon.addData(geojson);
-
-        var center = highlightedPolygon.getBounds().getCenter();
-        $('#info').html(blockTemplate({
-          geoid10: e.data.geoid10,
-          lat: center.lat,
-          lng: center.lng
-        }));
       });
       map.addLayer(gridLayer);
+    }
+
+    function updateBlockInfo() {
+      if (clickedBlockData) {
+        var data = [];
+        var bools = [];
+        var center = highlightedPolygon.getBounds().getCenter();
+
+        _.each(dataLabels, function(item) {
+          var itemValue = clickedBlockData[item[0]];
+          if (itemValue) {
+              bools.push({label: item[1]});
+          }
+        });
+        _.each(datasetLabels[pointset], function(item) {
+          data.push({value: clickedBlockData[item[0]], label: item[1]});
+        });
+
+        $('#block-info').html(blockTemplate({
+          geoid10: clickedBlockData.geoid10,
+          lat: center.lat,
+          lng: center.lng,
+          bools: bools,
+          data: data
+        }));
+      }
     }
 
     updateBlockTiles(pointset);
@@ -181,6 +243,7 @@
       otpaLayer.setPointset(pointset);
       update(indicators, range.value * 60);
       updateBlockTiles(pointset);
+      updateBlockInfo();
     });
 
     d3.select('#indicators').on("change", function() {
@@ -236,13 +299,14 @@
     }).addTo(map);
 
     var isochroneShowing = false;
-    $('#info').on('click', '[href="#load-isochrone"]', function(e) {
+    $('#block-info').on('click', '#toggle-travelshed', function(e) {
         e.preventDefault();
         if (!isochroneShowing) {
           var loc = L.latLng(e.target.dataset.lat, e.target.dataset.lng);
           otpaLayer.setLocation(loc);
           otpaLayer.showIsochrone(true);
           map.removeLayer(gridLayer);
+          highlightedPolygon.clearLayers();
           $('#isochrone-details').show();
           $('#toggle-travelshed').text('Hide Travelshed');
         } else {
