@@ -55,7 +55,6 @@ L.OTPALayer = L.FeatureGroup.extend({
     this._locationLayer.on('dragend', function(e) {
       self._setLocation(self._locationLayer.getLatLng()); // UPDATES ISOCHRONE WHEN PIN MOVES
     });
-    self.addLayer(this._locationLayer);
 
     var onEachPoint = function(feature, layer) {
       layer.on({
@@ -89,8 +88,6 @@ L.OTPALayer = L.FeatureGroup.extend({
     }).addTo(self);
 
     this._surfaceLayer = null;
-
-    self.addLayer(this._locationLayer);
 
     self.addLayer(this._pointsetLayer);
 
@@ -253,15 +250,17 @@ L.OTPALayer = L.FeatureGroup.extend({
       self.removeLayer(this._surfaceLayer);
     }
 
+    self.removeLayer(self._locationLayer);
     if (this._showIsochrone) {
       var tileUrl = this._endpoint + 'surfaces/' + surfaceId + '/isotiles/{z}/{x}/{y}.png';
       self._surfaceLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(self);
-      
+
       // re-add pointset layers to handle z-indexes
       self.removeLayer(self._pointsetLayer);
       self.removeLayer(self._filteredPointsetLayer);
       self._pointsetLayer.addTo(self);
       self._filteredPointsetLayer.addTo(self);
+      self._locationLayer.addTo(self);
     }
   },
 
