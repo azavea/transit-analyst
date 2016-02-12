@@ -71,8 +71,13 @@ var config = {
             req.params.table = 'philly_block_access';
             req.params.dbname = dbName;
             req.params.style = getStyle(req.params.pset);
-            req.params.interactivity = 'geoid10,geojson,cornerstore_access_pct_rank,headstart_access_pct_rank,healthcare_access_pct_rank,' + \
-                'daycare_access_pct_rank,playground_access_pct_rank,rec_access_pct_rank,park_access_pct_rank';
+            req.params.interactivity = ['geoid10,geojson,cornerstore_access_pct_rank,headstart_access_pct_rank,healthcare_access_pct_rank,',
+                'daycare_access_pct_rank,playground_access_pct_rank,rec_access_pct_rank,park_access_pct_rank,',
+                'recap_10,households,median_commute_distance,employment_access_index,local_job_density,local_retail_job_density,',
+                'retail_access_index,pct_renters,median_income_owners,median_income_renters,daycare,pov_idx,lbr_idx,promise_neighborhood,',
+                'choice_neighborhood,parks,cornerstore_access,headstart_access,healthcare_access,daycare_access,playground_access,',
+                'rec_access,park_access'
+                ].join('');
             callback(null, req);
         } catch(err) {
             callback(err, null);
