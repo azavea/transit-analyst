@@ -12,6 +12,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.0.0/lodash.min.js"></script>
   <script src="js/d3.min.js" charset="utf-8"></script>
+  <script src="js/leaflet.utfgrid.js" charset="utf-8"></script>
   <script src="js/OTPAGraph.js" charset="utf-8"></script>
   <script src="js/OTPAGraphBar.js" charset="utf-8"></script>
 
@@ -29,16 +30,18 @@
   <div id="map"></div>
   <div id="box" class="leaflet-bar">
     <div class="container">
-      <h1>Transit Data Analyst <img src="images/ajax-loader.gif" id="spinner"></h1>
+      <h1>Transit Data Analyst <img style="display: none;" src="images/ajax-loader.gif" id="spinner"></h1>
       <p></p>
-      <h4>Objects reachable within <span id="minutes">30</span> minutes:</h4>
-      <table id="options">
-        <tr><td>Travel time:</td><td><div id="slider"></div></td>
-        <!-- <tr><td>Visualization:</td><td><select id="graph-type"></div></td> -->
-        <tr><td>Point set:</td><td><select id="pointsets"></div></td>
-        <tr><td>Indicators:</td><td><select id="indicators"></div></td>
-      </table>
-      <div id="graph"></div>
+      <div id="isochrone-details" style="display: none">
+          <h4>Objects reachable within <span id="minutes">30</span> minutes: <span id="exit-isochrone" style="float: right">X</span></h4>
+        <table id="options">
+          <tr><td>Travel time:</td><td><div id="slider"></div></td>
+          <!-- <tr><td>Visualization:</td><td><select id="graph-type"></div></td> -->
+          <tr><td>Point set:</td><td><select id="pointsets"></div></td>
+          <tr><td>Indicators:</td><td><select id="indicators"></div></td>
+        </table>
+        <div id="graph"></div>
+      </div>
     </div>
   </div>
   <div id="info-box" class="leaflet-bar">
@@ -46,6 +49,11 @@
     <h3>Object Information</h4>
     <div id="info"></div>
   </div>
+  <script type="text/template" id="block-template">
+    <h4>Census Block <%= geoid10 %></h4>
+    <a style="width: 100%;" href="#load-isochrone" data-lat="<%= lat %>" data-lng="<%= lng %>">Show Travel Shed</a>
+  </div>
+  </script>
   <script type="text/template" id="info-template">
     <h4><%= label %></h4>
     <label><%= description %></label>
@@ -55,6 +63,7 @@
   <script>
     var endpoint = 'http://localhost:8080/otp/',
         tileUrl = 'http://localhost:4000/tiles/{z}/{x}/{y}.png',
+        gridUrl = 'http://localhost:4000/tiles/{z}/{x}/{y}.grid.json',
         basemapUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
         range = {
           value: 30,
@@ -89,7 +98,29 @@
       maxZoom: 18
     }).addTo(map);
 
-    L.tileLayer(tileUrl).addTo(map);
+    var infoTemplate = _.template($("#info-template").html());
+    var blockTemplate = _.template($("#block-template").html());
+
+    var tileLayer = L.tileLayer(tileUrl);
+    tileLayer.addTo(map);
+
+    var highlightedPolygon = L.geoJson([], {
+    }).addTo(map);
+
+    var gridLayer = new L.UtfGrid(gridUrl, {useJsonP: false});
+    gridLayer.on('mouseover', function(e) {
+      var geojson = JSON.parse(e.data.geojson);
+      highlightedPolygon.clearLayers();
+      highlightedPolygon.addData(geojson);
+
+      var center = highlightedPolygon.getBounds().getCenter();
+      $('#info').html(blockTemplate({
+        geoid10: e.data.geoid10,
+        lat: center.lat,
+        lng: center.lng
+      }));
+    });
+    map.addLayer(gridLayer);
 
     d3.select('#slider').append('input')
       .attr('type', 'range')
@@ -134,8 +165,6 @@
       update(indicators, range.value * 60)
     });
 
-    var infoTemplate = _.template($("#info-template").html());
-
     // // TODO: make sure order of on() and addTo() does not matter
     var otpaLayer = L.otpaLayer(endpoint, {
         cutoffMinutes: range.max,
@@ -143,7 +172,9 @@
         spinner: '#spinner',
         pointset: pointset,
         location: philly
-      }).on('pointsets', function(e) {
+      });
+
+    otpaLayer.on('pointsets', function(e) {
         d3.select('#pointsets').selectAll('option')
             .data(e.data).enter()
           .append('option')
@@ -177,7 +208,21 @@
           }));
       }).on('unselect', function(e) {
           $('#info').html('');
-    }).addTo(map);
+    });
+
+    $('#info').on('click', '[href="#load-isochrone"]', function(e) {
+        e.preventDefault();
+        map.removeLayer(otpaLayer);
+        otpaLayer.addTo(map);
+        var loc = L.latLng(e.target.dataset.lat, e.target.dataset.lng);
+        otpaLayer.setLocation(loc);
+
+        $('#isochrone-details').show();
+    });
+    $('#exit-isochrone').on('click', function(e) {
+        map.removeLayer(otpaLayer);
+        $('#isochrone-details').hide();
+    });
 
     // update() calls otpaGraph with a DOM selection as a parameter.
     // otpaGraph chains the call through to a specific graph type.
