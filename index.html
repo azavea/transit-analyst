@@ -231,10 +231,12 @@
           var loc = L.latLng(e.target.dataset.lat, e.target.dataset.lng);
           otpaLayer.setLocation(loc);
           otpaLayer.showIsochrone(true);
+          map.removeLayer(gridLayer);
           $('#isochrone-details').show();
           $('#toggle-travelshed').text('Hide Travelshed');
         } else {
           otpaLayer.showIsochrone(false);
+          map.addLayer(gridLayer);
           $('#isochrone-details').hide();
           $('#toggle-travelshed').text('Show Travelshed');
         }
