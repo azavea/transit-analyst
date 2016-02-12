@@ -54,8 +54,8 @@
   </script>
   <script>
     var endpoint = 'http://localhost:8080/otp/',
-        tileUrl = 'http://localhost:4000/tiles/{z}/{x}/{y}.png',
         basemapUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        blockTileBaseUrl = 'http://localhost:4000/tiles/';
         range = {
           value: 30,
           min: 1,
@@ -70,8 +70,8 @@
           {type: 'table', label: 'Table'},
           {type: 'density', label: 'Density'}
         ],
-        pointset = 'blockgroups.geo',
-        indicator = 'median_commute_distance',
+        pointset = 'healthcare.geo',
+        indicator = 'placeholder',
         indicators = {},
         graphType = graphTypes[0].type,
         visWidth = 300,
@@ -89,7 +89,19 @@
       maxZoom: 18
     }).addTo(map);
 
-    L.tileLayer(tileUrl).addTo(map);
+    var blockTileLayer = null;
+
+    function updateBlockTiles(pointset) {
+      var metric = pointset.slice(0, pointset.length - 4) + '_access_pct_rank'; // slice off .geo ending and add column name suffix
+      var blockTileUrl = blockTileBaseUrl + metric + '/{z}/{x}/{y}.png';
+      if (blockTileLayer != null) {
+        map.remove(blockTileLayer);
+      }
+      blockTileLayer = L.tileLayer(blockTileUrl);
+      blockTileLayer.addTo(map);
+    }
+
+    updateBlockTiles(pointset);
 
     d3.select('#slider').append('input')
       .attr('type', 'range')
@@ -119,19 +131,20 @@
       graphType = d3.event.target.value;
       d3.select('#graph').selectAll('.otpa-graph').remove();
       otpaGraph = d3.otpaGraph().type(graphType).width(visWidth);
-      update(indicators, range.value * 60)
+      update(indicators, range.value * 60);
     });
 
     d3.select('#pointsets').on("change", function() {
       pointset = d3.event.target.value;
       otpaLayer.setPointset(pointset);
-      update(indicators, range.value * 60)
+      update(indicators, range.value * 60);
+      updateBlockTiles(pointset);
     });
 
     d3.select('#indicators').on("change", function() {
       indicator = d3.event.target.value;
       d3.select('#graph').selectAll('.otpa-graph').remove();
-      update(indicators, range.value * 60)
+      update(indicators, range.value * 60);
     });
 
     var infoTemplate = _.template($("#info-template").html());
