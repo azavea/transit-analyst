@@ -23,6 +23,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     this._cutoffMinutes = options.cutoffMinutes;
     this._isochroneMinutes = options.isochroneMinutes;
     this._pointset = options.pointset;
+    this._showIsochrone = false;
 
     if (options.location) {
       this._location = L.latLng(options.location);
@@ -125,6 +126,12 @@ L.OTPALayer = L.FeatureGroup.extend({
       self._timeLimit = timeLimit;
       self._setView(self._indicatorId, self._timeLimit);
     }
+  },
+
+  showIsochrone: function (shouldShow) {
+    var self = this;
+    this._showIsochrone = shouldShow;
+    self._getIsochrones(self._surface.id);
   },
 
   _pointsetStyle: function() {
@@ -246,9 +253,16 @@ L.OTPALayer = L.FeatureGroup.extend({
       self.removeLayer(this._surfaceLayer);
     }
 
-    var tileUrl = this._endpoint + 'surfaces/' + surfaceId + '/isotiles/{z}/{x}/{y}.png';
-    self._surfaceLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(self);
-    self._surfaceLayer.bringToBack();
+    if (this._showIsochrone) {
+      var tileUrl = this._endpoint + 'surfaces/' + surfaceId + '/isotiles/{z}/{x}/{y}.png';
+      self._surfaceLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(self);
+      
+      // re-add pointset layers to handle z-indexes
+      self.removeLayer(self._pointsetLayer);
+      self.removeLayer(self._filteredPointsetLayer);
+      self._pointsetLayer.addTo(self);
+      self._filteredPointsetLayer.addTo(self);
+    }
   },
 
   _debouncedFilter: _.debounce(function(minutes) {
