@@ -164,9 +164,9 @@
 
       highlightedPolygon.on('click', function(e) {
         clickedBlockData = lastHoveredBlockData;
-        updateBlockInfo();
         clickedPolygon.clearLayers();
         clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
+        updateBlockInfo();
       });
 
       gridLayer = new L.UtfGrid(blockTileBaseUrl + pointset + '/{z}/{x}/{y}.grid.json', {useJsonP: false});
@@ -183,7 +183,7 @@
       if (clickedBlockData) {
         var data = [];
         var bools = [];
-        var center = highlightedPolygon.getBounds().getCenter();
+        var center = clickedPolygon.getBounds().getCenter();
 
         _.each(dataLabels, function(item) {
           var itemValue = clickedBlockData[item[0]];
