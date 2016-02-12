@@ -71,7 +71,8 @@ var config = {
             req.params.table = 'philly_block_access';
             req.params.dbname = dbName;
             req.params.style = getStyle(req.params.pset);
-            req.params.interactivity = 'geoid10,geojson';
+            req.params.interactivity = 'geoid10,geojson,cornerstore_access_pct_rank,headstart_access_pct_rank,healthcare_access_pct_rank,' + \
+                'daycare_access_pct_rank,playground_access_pct_rank,rec_access_pct_rank,park_access_pct_rank';
             callback(null, req);
         } catch(err) {
             callback(err, null);
