@@ -23,6 +23,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     this._cutoffMinutes = options.cutoffMinutes;
     this._isochroneMinutes = options.isochroneMinutes;
     this._pointset = options.pointset;
+    this._showIsochrone = false;
 
     if (options.location) {
       this._location = L.latLng(options.location);
@@ -37,6 +38,8 @@ L.OTPALayer = L.FeatureGroup.extend({
   addTo: function (map) {
     var self = this;
 
+    map.addLayer(self);
+
     if (!self._location) {
       self._location = map.getCenter();
     }
@@ -47,13 +50,12 @@ L.OTPALayer = L.FeatureGroup.extend({
       self.fireEvent('pointsets', {data: pointsets});
     });
 
-    // When layer is added to map, also add LocationLayer
-    // TODO: remove locationlayer when this layer is removed!
+    // When layer is added to group, also add LocationLayer
     this._locationLayer = new L.marker(self._location, {'draggable': true});
     this._locationLayer.on('dragend', function(e) {
-      self.setLocation(self._locationLayer.getLatLng()); // UPDATES ISOCHRONE WHEN PIN MOVES
+      self._setLocation(self._locationLayer.getLatLng()); // UPDATES ISOCHRONE WHEN PIN MOVES
     });
-    map.addLayer(this._locationLayer);
+    self.addLayer(this._locationLayer);
 
     var onEachPoint = function(feature, layer) {
       layer.on({
@@ -71,20 +73,20 @@ L.OTPALayer = L.FeatureGroup.extend({
           return L.circleMarker(latlng, self._pointsetStyle());
       },
       onEachFeature: onEachPoint
-    }).addTo(map);
+    }).addTo(self);
 
     this._filteredPointsetLayer = L.geoJson([], {
       pointToLayer: function (feature, latlng) {
           return L.circleMarker(latlng, self._filteredPointsetStyle());
       },
       onEachFeature: onEachPoint
-    }).addTo(map);
+    }).addTo(self);
 
     this._highlightedLayer = L.geoJson([], {
       pointToLayer: function (feature, latlng) {
           return L.circleMarker(latlng, self._highlightedPointsetStyle());
       }
-    }).addTo(map);
+    }).addTo(self);
 
     this._surfaceLayer = null;
 
@@ -98,6 +100,11 @@ L.OTPALayer = L.FeatureGroup.extend({
   },
 
   setLocation: function (latlng) {
+    this._locationLayer.setLatLng(latlng);
+    this._setLocation(latlng);
+  },
+
+  _setLocation: function (latlng) {
     var self = this;
     self._location = latlng;
     self._createSurface(self._location, false);
@@ -119,6 +126,12 @@ L.OTPALayer = L.FeatureGroup.extend({
       self._timeLimit = timeLimit;
       self._setView(self._indicatorId, self._timeLimit);
     }
+  },
+
+  showIsochrone: function (shouldShow) {
+    var self = this;
+    this._showIsochrone = shouldShow;
+    self._getIsochrones(self._surface.id);
   },
 
   _pointsetStyle: function() {
@@ -205,7 +218,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     var self = this;
     var path = 'surfaces/' + surfaceId
         + '/indicator'
-        + '?targets=' + pointset;
+        + '?targets=' + pointset + '&includeHistograms=true';
     this._getJSON(path, function(indicator) {
       self._indicator = indicator;
       self.fireEvent('change', {data: indicator});
@@ -237,11 +250,19 @@ L.OTPALayer = L.FeatureGroup.extend({
     var self = this;
 
     if (this._surfaceLayer != null) {
-      map.removeLayer(this._surfaceLayer);
+      self.removeLayer(this._surfaceLayer);
     }
 
-    var tileUrl = this._endpoint + 'surfaces/' + surfaceId + '/isotiles/{z}/{x}/{y}.png';
-    self._surfaceLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(map);
+    if (this._showIsochrone) {
+      var tileUrl = this._endpoint + 'surfaces/' + surfaceId + '/isotiles/{z}/{x}/{y}.png';
+      self._surfaceLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(self);
+      
+      // re-add pointset layers to handle z-indexes
+      self.removeLayer(self._pointsetLayer);
+      self.removeLayer(self._filteredPointsetLayer);
+      self._pointsetLayer.addTo(self);
+      self._filteredPointsetLayer.addTo(self);
+    }
   },
 
   _debouncedFilter: _.debounce(function(minutes) {

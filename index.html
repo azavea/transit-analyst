@@ -12,6 +12,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.0.0/lodash.min.js"></script>
   <script src="js/d3.min.js" charset="utf-8"></script>
+  <script src="js/leaflet.utfgrid.js" charset="utf-8"></script>
   <script src="js/OTPAGraph.js" charset="utf-8"></script>
   <script src="js/OTPAGraphBar.js" charset="utf-8"></script>
 
@@ -46,6 +47,11 @@
     <h3>Object Information</h4>
     <div id="info"></div>
   </div>
+  <script type="text/template" id="block-template">
+    <h4>Census Block <%= geoid10 %></h4>
+    <a id='toggle-travelshed' style="width: 100%;" href="#load-isochrone" data-lat="<%= lat %>" data-lng="<%= lng %>">Show Travelshed</a>
+  </div>
+  </script>
   <script type="text/template" id="info-template">
     <h4><%= label %></h4>
     <label><%= description %></label>
@@ -54,8 +60,8 @@
   </script>
   <script>
     var endpoint = 'http://localhost:8080/otp/',
-        tileUrl = 'http://localhost:4000/tiles/{z}/{x}/{y}.png',
         basemapUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        blockTileBaseUrl = 'http://localhost:4000/tiles/';
         range = {
           value: 30,
           min: 1,
@@ -70,8 +76,8 @@
           {type: 'table', label: 'Table'},
           {type: 'density', label: 'Density'}
         ],
-        pointset = 'blockgroups.geo',
-        indicator = 'median_commute_distance',
+        pointset = 'healthcare.geo',
+        indicator = 'placeholder',
         indicators = {},
         graphType = graphTypes[0].type,
         visWidth = 300,
@@ -89,7 +95,44 @@
       maxZoom: 18
     }).addTo(map);
 
-    L.tileLayer(tileUrl).addTo(map);
+    var blockTileLayer = null;
+    var gridLayer = null;
+    var highlightedPolygon = null;
+
+    function updateBlockTiles(pointset) {
+      var blockTileUrl = blockTileBaseUrl + pointset + '/{z}/{x}/{y}.png';
+      if (blockTileLayer != null) {
+        map.removeLayer(blockTileLayer);
+      }
+      blockTileLayer = L.tileLayer(blockTileUrl);
+      map.addLayer(blockTileLayer);
+
+      if (gridLayer != null) {
+        map.removeLayer(gridLayer);
+      }
+
+      if (highlightedPolygon != null) {
+        map.removeLayer(highlightedPolygon);
+      }
+
+      highlightedPolygon = L.geoJson([], {}).addTo(map);
+      gridLayer = new L.UtfGrid(blockTileBaseUrl + pointset + '/{z}/{x}/{y}.grid.json', {useJsonP: false});
+      gridLayer.on('mouseover', function(e) {
+        var geojson = JSON.parse(e.data.geojson);
+        highlightedPolygon.clearLayers();
+        highlightedPolygon.addData(geojson);
+
+        var center = highlightedPolygon.getBounds().getCenter();
+        $('#info').html(blockTemplate({
+          geoid10: e.data.geoid10,
+          lat: center.lat,
+          lng: center.lng
+        }));
+      });
+      map.addLayer(gridLayer);
+    }
+
+    updateBlockTiles(pointset);
 
     d3.select('#slider').append('input')
       .attr('type', 'range')
@@ -119,22 +162,24 @@
       graphType = d3.event.target.value;
       d3.select('#graph').selectAll('.otpa-graph').remove();
       otpaGraph = d3.otpaGraph().type(graphType).width(visWidth);
-      update(indicators, range.value * 60)
+      update(indicators, range.value * 60);
     });
 
     d3.select('#pointsets').on("change", function() {
       pointset = d3.event.target.value;
       otpaLayer.setPointset(pointset);
-      update(indicators, range.value * 60)
+      update(indicators, range.value * 60);
+      updateBlockTiles(pointset);
     });
 
     d3.select('#indicators').on("change", function() {
       indicator = d3.event.target.value;
       d3.select('#graph').selectAll('.otpa-graph').remove();
-      update(indicators, range.value * 60)
+      update(indicators, range.value * 60);
     });
 
     var infoTemplate = _.template($("#info-template").html());
+    var blockTemplate = _.template($("#block-template").html());
 
     // // TODO: make sure order of on() and addTo() does not matter
     var otpaLayer = L.otpaLayer(endpoint, {
@@ -178,6 +223,23 @@
       }).on('unselect', function(e) {
           $('#info').html('');
     }).addTo(map);
+
+    var isochroneShowing = false;
+    $('#info').on('click', '[href="#load-isochrone"]', function(e) {
+        e.preventDefault();
+        if (!isochroneShowing) {
+          var loc = L.latLng(e.target.dataset.lat, e.target.dataset.lng);
+          otpaLayer.setLocation(loc);
+          otpaLayer.showIsochrone(true);
+          $('#isochrone-details').show();
+          $('#toggle-travelshed').text('Hide Travelshed');
+        } else {
+          otpaLayer.showIsochrone(false);
+          $('#isochrone-details').hide();
+          $('#toggle-travelshed').text('Show Travelshed');
+        }
+        isochroneShowing = !isochroneShowing;
+    });
 
     // update() calls otpaGraph with a DOM selection as a parameter.
     // otpaGraph chains the call through to a specific graph type.
