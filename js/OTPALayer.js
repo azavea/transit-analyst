@@ -128,7 +128,11 @@ L.OTPALayer = L.FeatureGroup.extend({
   showIsochrone: function (shouldShow) {
     var self = this;
     this._showIsochrone = shouldShow;
-    self._getIsochrones(self._surface.id);
+    if (self._surface) {
+      self._getIsochrones(self._surface.id);
+    } else if (this._surfaceLayer != null) {
+      self.removeLayer(this._surfaceLayer);
+    }
   },
 
   _pointsetStyle: function() {

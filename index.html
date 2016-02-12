@@ -115,9 +115,20 @@
         map.removeLayer(highlightedPolygon);
       }
 
+      var lastHoveredBlockData = null;
       highlightedPolygon = L.geoJson([], {}).addTo(map);
+
+      highlightedPolygon.on('click', function(e) {
+        if (lastHoveredBlockData) {
+          console.log(lastHoveredBlockData);
+          // TODO: show info in place of bar graph
+          d3.select('#graph').selectAll('.otpa-graph').remove();
+        }
+      });
+
       gridLayer = new L.UtfGrid(blockTileBaseUrl + pointset + '/{z}/{x}/{y}.grid.json', {useJsonP: false});
       gridLayer.on('mouseover', function(e) {
+        lastHoveredBlockData = e.data;
         var geojson = JSON.parse(e.data.geojson);
         highlightedPolygon.clearLayers();
         highlightedPolygon.addData(geojson);
