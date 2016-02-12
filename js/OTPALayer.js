@@ -211,7 +211,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     var self = this;
     var path = 'surfaces/' + surfaceId
         + '/indicator'
-        + '?targets=' + pointset;
+        + '?targets=' + pointset + '&includeHistograms=true';
     this._getJSON(path, function(indicator) {
       self._indicator = indicator;
       self.fireEvent('change', {data: indicator});

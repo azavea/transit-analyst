@@ -30,18 +30,16 @@
   <div id="map"></div>
   <div id="box" class="leaflet-bar">
     <div class="container">
-      <h1>Transit Data Analyst <img style="display: none;" src="images/ajax-loader.gif" id="spinner"></h1>
+      <h1>Transit Data Analyst <img src="images/ajax-loader.gif" id="spinner"></h1>
       <p></p>
-      <div id="isochrone-details" style="display: none">
-          <h4>Objects reachable within <span id="minutes">30</span> minutes: <span id="exit-isochrone" style="float: right">X</span></h4>
-        <table id="options">
-          <tr><td>Travel time:</td><td><div id="slider"></div></td>
-          <!-- <tr><td>Visualization:</td><td><select id="graph-type"></div></td> -->
-          <tr><td>Point set:</td><td><select id="pointsets"></div></td>
-          <tr><td>Indicators:</td><td><select id="indicators"></div></td>
-        </table>
-        <div id="graph"></div>
-      </div>
+      <h4>Objects reachable within <span id="minutes">30</span> minutes:</h4>
+      <table id="options">
+        <tr><td>Travel time:</td><td><div id="slider"></div></td>
+        <!-- <tr><td>Visualization:</td><td><select id="graph-type"></div></td> -->
+        <tr><td>Point set:</td><td><select id="pointsets"></div></td>
+        <tr><td>Indicators:</td><td><select id="indicators"></div></td>
+      </table>
+      <div id="graph"></div>
     </div>
   </div>
   <div id="info-box" class="leaflet-bar">
@@ -62,9 +60,8 @@
   </script>
   <script>
     var endpoint = 'http://localhost:8080/otp/',
-        tileUrl = 'http://localhost:4000/tiles/{z}/{x}/{y}.png',
-        gridUrl = 'http://localhost:4000/tiles/{z}/{x}/{y}.grid.json',
         basemapUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        blockTileBaseUrl = 'http://localhost:4000/tiles/';
         range = {
           value: 30,
           min: 1,
@@ -79,8 +76,8 @@
           {type: 'table', label: 'Table'},
           {type: 'density', label: 'Density'}
         ],
-        pointset = 'blockgroups.geo',
-        indicator = 'median_commute_distance',
+        pointset = 'healthcare.geo',
+        indicator = 'placeholder',
         indicators = {},
         graphType = graphTypes[0].type,
         visWidth = 300,
@@ -98,29 +95,44 @@
       maxZoom: 18
     }).addTo(map);
 
-    var infoTemplate = _.template($("#info-template").html());
-    var blockTemplate = _.template($("#block-template").html());
+    var blockTileLayer = null;
+    var gridLayer = null;
+    var highlightedPolygon = null;
 
-    var tileLayer = L.tileLayer(tileUrl);
-    tileLayer.addTo(map);
+    function updateBlockTiles(pointset) {
+      var blockTileUrl = blockTileBaseUrl + pointset + '/{z}/{x}/{y}.png';
+      if (blockTileLayer != null) {
+        map.removeLayer(blockTileLayer);
+      }
+      blockTileLayer = L.tileLayer(blockTileUrl);
+      map.addLayer(blockTileLayer);
 
-    var highlightedPolygon = L.geoJson([], {
-    }).addTo(map);
+      if (gridLayer != null) {
+        map.removeLayer(gridLayer);
+      }
 
-    var gridLayer = new L.UtfGrid(gridUrl, {useJsonP: false});
-    gridLayer.on('mouseover', function(e) {
-      var geojson = JSON.parse(e.data.geojson);
-      highlightedPolygon.clearLayers();
-      highlightedPolygon.addData(geojson);
+      if (highlightedPolygon != null) {
+        map.removeLayer(highlightedPolygon);
+      }
 
-      var center = highlightedPolygon.getBounds().getCenter();
-      $('#info').html(blockTemplate({
-        geoid10: e.data.geoid10,
-        lat: center.lat,
-        lng: center.lng
-      }));
-    });
-    map.addLayer(gridLayer);
+      highlightedPolygon = L.geoJson([], {}).addTo(map);
+      gridLayer = new L.UtfGrid(blockTileBaseUrl + pointset + '/{z}/{x}/{y}.grid.json', {useJsonP: false});
+      gridLayer.on('mouseover', function(e) {
+        var geojson = JSON.parse(e.data.geojson);
+        highlightedPolygon.clearLayers();
+        highlightedPolygon.addData(geojson);
+
+        var center = highlightedPolygon.getBounds().getCenter();
+        $('#info').html(blockTemplate({
+          geoid10: e.data.geoid10,
+          lat: center.lat,
+          lng: center.lng
+        }));
+      });
+      map.addLayer(gridLayer);
+    }
+
+    updateBlockTiles(pointset);
 
     d3.select('#slider').append('input')
       .attr('type', 'range')
@@ -150,20 +162,24 @@
       graphType = d3.event.target.value;
       d3.select('#graph').selectAll('.otpa-graph').remove();
       otpaGraph = d3.otpaGraph().type(graphType).width(visWidth);
-      update(indicators, range.value * 60)
+      update(indicators, range.value * 60);
     });
 
     d3.select('#pointsets').on("change", function() {
       pointset = d3.event.target.value;
       otpaLayer.setPointset(pointset);
-      update(indicators, range.value * 60)
+      update(indicators, range.value * 60);
+      updateBlockTiles(pointset);
     });
 
     d3.select('#indicators').on("change", function() {
       indicator = d3.event.target.value;
       d3.select('#graph').selectAll('.otpa-graph').remove();
-      update(indicators, range.value * 60)
+      update(indicators, range.value * 60);
     });
+
+    var infoTemplate = _.template($("#info-template").html());
+    var blockTemplate = _.template($("#block-template").html());
 
     // // TODO: make sure order of on() and addTo() does not matter
     var otpaLayer = L.otpaLayer(endpoint, {
@@ -172,9 +188,7 @@
         spinner: '#spinner',
         pointset: pointset,
         location: philly
-      });
-
-    otpaLayer.on('pointsets', function(e) {
+      }).on('pointsets', function(e) {
         d3.select('#pointsets').selectAll('option')
             .data(e.data).enter()
           .append('option')
@@ -208,7 +222,7 @@
           }));
       }).on('unselect', function(e) {
           $('#info').html('');
-    });
+    }).addTo(map);
 
     $('#info').on('click', '[href="#load-isochrone"]', function(e) {
         e.preventDefault();
