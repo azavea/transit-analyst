@@ -89,7 +89,7 @@
           {type: 'table', label: 'Table'},
           {type: 'density', label: 'Density'}
         ],
-        pointset = 'healthcare.geo',
+        pointset = 'headstart.geo',
         indicator = 'placeholder',
         indicators = {},
         graphType = graphTypes[0].type,
@@ -267,7 +267,6 @@
     });
 
     d3.select('#pointsets').on("change", function() {
-      console.log('change');
       pointset = d3.event.target.value;
       otpaLayer.setPointset(pointset);
       update(indicators, range.value * 60);
@@ -325,6 +324,8 @@
           }));
       }).on('unselect', function(e) {
           $('#info').html('');
+          // make sure initally displayed selection matches start value
+          d3.select('#pointsets').property('value', pointset);
     }).addTo(map);
 
     var isochroneShowing = false;
