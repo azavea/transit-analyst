@@ -52,7 +52,7 @@
   </div>
   <script type="text/template" id="block-template">
     <h4>Census Block <%= geoid10 %></h4>
-    <a href="#" id='toggle-travelshed' style="width: 100%;" data-lat="<%= lat %>" data-lng="<%= lng %>">Show Travelshed</a>
+    <button href="#" id='toggle-travelshed' style="width: 100%;" data-lat="<%= lat %>" data-lng="<%= lng %>">Show Travelshed</button>
     <ul>
     <% _.each(bools, function(item) { %>
       <li>
