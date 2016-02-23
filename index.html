@@ -75,7 +75,7 @@
   </script>
   <script>
     var endpoint = 'http://otp.transitanalyst.com/otp/',
-        basemapUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        basemapUrl= 'http://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png',
         blockTileBaseUrl = 'http://transitanalyst.com/tiles/';
         range = {
           value: 30,
@@ -135,7 +135,8 @@
     var map = L.map('map').setView(philly, 12);
 
     L.tileLayer(basemapUrl, {
-      maxZoom: 18
+      maxZoom: 18,
+      attribution: 'Maps © Thunderforest, Data © OpenStreetMap contributors'
     }).addTo(map);
 
     var blockTileLayer = null;
