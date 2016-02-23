@@ -54,7 +54,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     this._locationLayer = new L.marker(self._location, {'draggable': true});
     this._locationLayer.on('dragend', function(e) {
       self._setLocation(self._locationLayer.getLatLng(), true); // UPDATES ISOCHRONE WHEN PIN MOVES
-    });
+    }).addTo(self);
 
     var onEachPoint = function(feature, layer) {
       layer.on({
@@ -266,8 +266,8 @@ L.OTPALayer = L.FeatureGroup.extend({
       self.removeLayer(self._filteredPointsetLayer);
       self._pointsetLayer.addTo(self);
       self._filteredPointsetLayer.addTo(self);
-      self._locationLayer.addTo(self);
     }
+    self._locationLayer.addTo(self);
   },
 
   _debouncedFilter: _.debounce(function(minutes) {
