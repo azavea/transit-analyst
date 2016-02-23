@@ -10,7 +10,7 @@ d3.otpaGraphBar = function module() {
   // Private variables
   var margin = {top: 20, right: 0, bottom: 30, left: 125},
       width = 480 - margin.left - margin.right,
-      height = 350 - margin.top - margin.bottom,
+      height = 200 - margin.top - margin.bottom,
       barGap = 20, // including text
       axisHeight = 50,
       color = d3.scale.category10(),
@@ -28,6 +28,7 @@ d3.otpaGraphBar = function module() {
 
   var yAxis = d3.svg.axis()
       .scale(y)
+      .ticks(7)
       .orient("left");
 
   function otpaGraphBar(selection) {
