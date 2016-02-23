@@ -124,7 +124,7 @@
             },
             'playgrounds.geo': {
                 'index': 'playground_access_pct_rank',
-                'label': 'Playgrounds',
+                'label': 'Playground',
                 'percentile': 'playground_access'
             },
         };
@@ -295,7 +295,7 @@
             .data(e.data).enter()
           .append('option')
             .attr('value', function(d) { return d.id; })
-            .html(function(d) { return d.id; });
+            .html(function(d) { return datasetLabels[d.id].label + "s"; });
       }).on('change', function(e) {
         indicators = e.data;
         var indicatorKeys;
@@ -350,7 +350,7 @@
     // otpaGraph chains the call through to a specific graph type.
     var attributes = {};
     function update(data, seconds) {
-    
+
       var attributes = {};
       if (data && data.data) {
         attributes['Locations accessible'] = data.data[indicator].counts;
