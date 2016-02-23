@@ -28,6 +28,7 @@ d3.otpaGraphBar = function module() {
 
   var yAxis = d3.svg.axis()
       .scale(y)
+      .ticks(7)
       .orient("left");
 
   function otpaGraphBar(selection) {
