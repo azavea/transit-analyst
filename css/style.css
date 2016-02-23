@@ -43,7 +43,7 @@ h1, h2, h3 {
 }
 
 #info-box {
-  bottom: 10px;
+  bottom: 18px;
   right: 10px;
   width: 460px;
   max-height: calc(100% - 30px);
