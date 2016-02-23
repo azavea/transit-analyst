@@ -53,7 +53,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     // When layer is added to group, also add LocationLayer
     this._locationLayer = new L.marker(self._location, {'draggable': true});
     this._locationLayer.on('dragend', function(e) {
-      self._setLocation(self._locationLayer.getLatLng()); // UPDATES ISOCHRONE WHEN PIN MOVES
+      self._setLocation(self._locationLayer.getLatLng(), true); // UPDATES ISOCHRONE WHEN PIN MOVES
     });
 
     var onEachPoint = function(feature, layer) {
@@ -91,20 +91,20 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     self.addLayer(this._pointsetLayer);
 
-    self._createSurface(this._location, true);
+    self._createSurface(this._location, true, false);
 
     return self;
   },
 
   setLocation: function (latlng) {
     this._locationLayer.setLatLng(latlng);
-    this._setLocation(latlng);
+    this._setLocation(latlng, false);
   },
 
-  _setLocation: function (latlng) {
+  _setLocation: function (latlng, showIsochrone) {
     var self = this;
     self._location = latlng;
-    self._createSurface(self._location, false);
+    self._createSurface(self._location, false, showIsochrone);
   },
 
   setPointset: function (pointset) {
@@ -168,7 +168,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     };
   },
 
-  _createSurface: function(location, getPointset) {
+  _createSurface: function(location, getPointset, updateIsochrone) {
     var self = this;
 
     var dfd = $.Deferred();
@@ -192,13 +192,13 @@ L.OTPALayer = L.FeatureGroup.extend({
       if (getPointset && self._pointset) {
         self._getPointset(self._pointset).then(function() {
           if (json && json.id) {
-            self._updateIsochronesIndicators(json.id);
+            self._updateIsochronesIndicators(json.id, updateIsochrone);
           }
           dfd.resolve();
         });
       } else {
         if (json && json.id) {
-          self._updateIsochronesIndicators(json.id);
+          self._updateIsochronesIndicators(json.id, updateIsochrone);
         }
         dfd.resolve();
       }
@@ -207,11 +207,13 @@ L.OTPALayer = L.FeatureGroup.extend({
     return dfd.promise();
   },
 
-  _updateIsochronesIndicators: function(surfaceId) {
+  _updateIsochronesIndicators: function(surfaceId, updateIsochrone) {
     var self = this;
-    self._getIsochrones(surfaceId);
     if (self._pointset) {
       self._getIndicator(surfaceId, self._pointset);
+    }
+    if (updateIsochrone) {
+        self._getIsochrones(surfaceId);
     }
   },
 
