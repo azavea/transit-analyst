@@ -8,6 +8,7 @@
 	<link rel="stylesheet" href="css/otpagraph.css" />
 	<link rel="stylesheet" href="css/leaflet.css" />
   <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+  <link rel="stylesheet" href="css/Control.Geocoder.css" />
   <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.0.0/lodash.min.js"></script>
@@ -15,6 +16,7 @@
   <script src="js/leaflet.utfgrid.js" charset="utf-8"></script>
   <script src="js/OTPAGraph.js" charset="utf-8"></script>
   <script src="js/OTPAGraphBar.js" charset="utf-8"></script>
+  <script src="js/Control.Geocoder.js"></script>
 
   <!--
   <script src="js/OTPAGraphLine.js" charset="utf-8"></script>
@@ -139,8 +141,33 @@
     var blockTileLayer = null;
     var gridLayer = null;
     var highlightedPolygon = null;
+    var lastHoveredBlockData = null;
     var clickedBlockData = null;
     var clickedPolygon = L.geoJson([], {}).addTo(map);
+
+    var geocoder = L.Control.geocoder({
+        position: "topleft",
+    }).addTo(map);
+
+    geocoder.markGeocode = function(result) {
+        map.setView(result.center, 14);
+        if (gridLayer) {
+            // Get the object data and call the click event handler,
+            // which will highligh the block group for that lat/lng
+            var object = gridLayer._objectForEvent({latlng: result.center});
+            if (object.data) {
+                lastHoveredBlockData = object.data;
+                handleHighlightedClick();
+            }
+        }
+    };
+
+    function handleHighlightedClick() {
+        clickedBlockData = lastHoveredBlockData;
+        clickedPolygon.clearLayers();
+        clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
+        updateBlockInfo();
+      }
 
     function updateBlockTiles(pointset) {
       var blockTileUrl = blockTileBaseUrl + pointset + '/{z}/{x}/{y}.png';
@@ -158,16 +185,9 @@
         map.removeLayer(highlightedPolygon);
       }
 
-      var lastHoveredBlockData = null;
-
       highlightedPolygon = L.geoJson([], {}).addTo(map);
 
-      highlightedPolygon.on('click', function(e) {
-        clickedBlockData = lastHoveredBlockData;
-        clickedPolygon.clearLayers();
-        clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
-        updateBlockInfo();
-      });
+      highlightedPolygon.on('click', handleHighlightedClick);
 
       gridLayer = new L.UtfGrid(blockTileBaseUrl + pointset + '/{z}/{x}/{y}.grid.json', {useJsonP: false});
       gridLayer.on('mouseover', function(e) {
