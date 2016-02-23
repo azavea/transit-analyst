@@ -79,3 +79,46 @@ ul {
 #options input, #options select {
   width: 100%;
 }
+
+#bools-list li {
+    display: inline-block;
+    text-align: center;
+    margin: 5px 34px;
+    padding: 5px;
+    color: #888;
+}
+
+#bools-list li.active {
+    color: #fff;
+}
+
+#bools-list li.recap_10.active {
+    background-color: #459CB0;
+}
+
+#bools-list li.choice_neighborhood.active {
+    background-color: #EAA40C;
+}
+
+#bools-list li.promise_neighborhood.active {
+    background-color: #EA0C0C;
+}
+
+#toggle-travelshed {
+    width: calc(100% - 10px);
+    height: 30px;
+    margin: 5px;
+}
+
+#access-list {
+    list-style-type: circle;
+    padding-left: 20px;
+    padding-top: 10px;
+}
+#access-list li {
+    font-size: large;
+}
+
+.pull-right {
+    float: right;
+}
