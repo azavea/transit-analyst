@@ -343,7 +343,8 @@
     var attributes = {};
     function update(data, seconds) {
       if (data && data.data) {
-        var attributes = data.data[indicator];
+        var attributes = {'counts': data.data[indicator].counts};
+        console.log(attributes);
       }
       d3.select('#graph').selectAll('.otpa-graph')
           .data([{seconds: seconds, attributes: attributes}])
