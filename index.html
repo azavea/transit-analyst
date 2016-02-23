@@ -267,6 +267,7 @@
     });
 
     d3.select('#pointsets').on("change", function() {
+      console.log('change');
       pointset = d3.event.target.value;
       otpaLayer.setPointset(pointset);
       update(indicators, range.value * 60);
