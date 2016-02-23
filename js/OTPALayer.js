@@ -148,7 +148,8 @@ L.OTPALayer = L.FeatureGroup.extend({
 
   _filteredPointsetStyle: function() {
     return {
-      radius: 4,
+      radius: 6,
+      lineColor: "#777",
       fillColor: "#000",
       color: "#ddd",
       weight: 1,
@@ -159,7 +160,8 @@ L.OTPALayer = L.FeatureGroup.extend({
 
   _highlightedPointsetStyle: function() {
     return {
-      radius: 4,
+      radius: 6,
+      lineColor: "#777",
       fillColor: "#90EE90",
       color: "#000",
       weight: 1,
