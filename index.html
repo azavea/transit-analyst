@@ -206,6 +206,7 @@
     geocoder.markGeocode = function(result) {
         map.setView(result.center, 14);
         moveHighlightedBlock(result.center);
+        otpaLayer.setLocation(result.center);
     };
 
     function handleHighlightedClick(e) {
