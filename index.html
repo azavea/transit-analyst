@@ -45,13 +45,10 @@
         <tr hidden="true"><td>Indicators:</td><td><select id="indicators"></div></td>
       </table>
       <div id="graph"></div>
+      <hr>
       <div id="block-info"></div>
+      <div id="info"></div>
     </div>
-  </div>
-  <div id="info-box" class="leaflet-bar">
-    <div class="info-container">
-    <h3>Location Details</h4>
-    <div id="info"></div>
   </div>
   <div class="modal fade" id="legend" tabindex="-1">
     <div class="modal-dialog" role="document">
@@ -91,6 +88,8 @@
   </div>
   </script>
   <script type="text/template" id="info-template">
+    <hr>
+    <h3>Location Details</h4>
     <h4><%= label %></h4>
     <label><%= description %></label>
   </div>
