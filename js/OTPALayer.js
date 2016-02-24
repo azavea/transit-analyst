@@ -94,7 +94,9 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     self.addLayer(this._pointsetLayer);
 
-    self._createSurface(this._location, true, false);
+    self._createSurface(this._location, true, false).then(function() {
+      self.fireEvent('movedlocation', self._location);
+    });
 
     return self;
   },

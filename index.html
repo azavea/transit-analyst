@@ -156,7 +156,7 @@
     function moveHighlightedBlock(newPoint) {
       if (gridLayer) {
         // Get the object data and call the click event handler,
-        // which will highligh the block group for that lat/lng
+        // which will highlight the block group for that lat/lng
         var object = gridLayer._objectForEvent({latlng: newPoint});
         if (object.data) {
           lastHoveredBlockData = object.data;
@@ -174,7 +174,6 @@
       clickedBlockData = lastHoveredBlockData;
       clickedPolygon.clearLayers();
       clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
-      otpaLayer.setLocation(e.latlng);
       updateBlockInfo();
     }
 
@@ -198,6 +197,7 @@
 
       highlightedPolygon.on('click', function(e) {
         handleHighlightedClick(e);
+        otpaLayer.setLocation(e.latlng);
       });
 
       gridLayer = new L.UtfGrid(blockTileBaseUrl + pointset + '/{z}/{x}/{y}.grid.json', {useJsonP: false});
@@ -341,8 +341,6 @@
     $('#block-info').on('click', '#toggle-travelshed', function(e) {
         e.preventDefault();
         if (!isochroneShowing) {
-          //var loc = L.latLng(e.target.dataset.lat, e.target.dataset.lng);
-          //otpaLayer.setLocation(loc);
           otpaLayer.showIsochrone(true);
           map.removeLayer(gridLayer);
           highlightedPolygon.clearLayers();
