@@ -147,31 +147,35 @@
     var highlightedPolygon = null;
     var lastHoveredBlockData = null;
     var clickedBlockData = null;
-    var clickedPolygon = L.geoJson([], {}).addTo(map);
+    var clickedPolygon = L.geoJson([], {style: {color: '#ff3300'}}).addTo(map);
 
     var geocoder = L.Control.geocoder({
         position: "topleft",
     }).addTo(map);
 
+    function moveHighlightedBlock(newPoint) {
+      if (gridLayer) {
+        // Get the object data and call the click event handler,
+        // which will highlight the block group for that lat/lng
+        var object = gridLayer._objectForEvent({latlng: newPoint});
+        if (object.data) {
+          lastHoveredBlockData = object.data;
+          handleHighlightedClick({latlng: newPoint});
+        }
+      }
+    }
+
     geocoder.markGeocode = function(result) {
         map.setView(result.center, 14);
-        if (gridLayer) {
-            // Get the object data and call the click event handler,
-            // which will highligh the block group for that lat/lng
-            var object = gridLayer._objectForEvent({latlng: result.center});
-            if (object.data) {
-                lastHoveredBlockData = object.data;
-                handleHighlightedClick();
-            }
-        }
+        moveHighlightedBlock(result.center);
     };
 
-    function handleHighlightedClick() {
-        clickedBlockData = lastHoveredBlockData;
-        clickedPolygon.clearLayers();
-        clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
-        updateBlockInfo();
-      }
+    function handleHighlightedClick(e) {
+      clickedBlockData = lastHoveredBlockData;
+      clickedPolygon.clearLayers();
+      clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
+      updateBlockInfo();
+    }
 
     function updateBlockTiles(pointset) {
       var blockTileUrl = blockTileBaseUrl + pointset + '/{z}/{x}/{y}.png';
@@ -189,9 +193,12 @@
         map.removeLayer(highlightedPolygon);
       }
 
-      highlightedPolygon = L.geoJson([], {}).addTo(map);
+      highlightedPolygon = L.geoJson([], {style: {color: '#ff5050'} }).addTo(map);
 
-      highlightedPolygon.on('click', handleHighlightedClick);
+      highlightedPolygon.on('click', function(e) {
+        handleHighlightedClick(e);
+        otpaLayer.setLocation(e.latlng);
+      });
 
       gridLayer = new L.UtfGrid(blockTileBaseUrl + pointset + '/{z}/{x}/{y}.grid.json', {useJsonP: false});
       gridLayer.on('mouseover', function(e) {
@@ -326,14 +333,14 @@
           $('#info').html('');
           // make sure initally displayed selection matches start value
           d3.select('#pointsets').property('value', pointset);
-    }).addTo(map);
+      }).on('movedlocation', function(pt) {
+          moveHighlightedBlock(pt);
+      }).addTo(map);
 
     var isochroneShowing = false;
     $('#block-info').on('click', '#toggle-travelshed', function(e) {
         e.preventDefault();
         if (!isochroneShowing) {
-          var loc = L.latLng(e.target.dataset.lat, e.target.dataset.lng);
-          otpaLayer.setLocation(loc);
           otpaLayer.showIsochrone(true);
           map.removeLayer(gridLayer);
           highlightedPolygon.clearLayers();

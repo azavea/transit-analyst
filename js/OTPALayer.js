@@ -53,6 +53,9 @@ L.OTPALayer = L.FeatureGroup.extend({
     // When layer is added to group, also add LocationLayer
     this._locationLayer = new L.marker(self._location, {'draggable': true});
     this._locationLayer.on('dragend', function(e) {
+      self.removeLayer(self._locationLayer);
+      self._locationLayer.addTo(self);
+      self.fireEvent('movedlocation', self._locationLayer.getLatLng());
       self._setLocation(self._locationLayer.getLatLng(), true); // UPDATES ISOCHRONE WHEN PIN MOVES
     }).addTo(self);
 
@@ -91,7 +94,9 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     self.addLayer(this._pointsetLayer);
 
-    self._createSurface(this._location, true, false);
+    self._createSurface(this._location, true, false).then(function() {
+      self.fireEvent('movedlocation', self._location);
+    });
 
     return self;
   },
@@ -269,6 +274,7 @@ L.OTPALayer = L.FeatureGroup.extend({
       self._pointsetLayer.addTo(self);
       self._filteredPointsetLayer.addTo(self);
     }
+    self._highlightedLayer.bringToFront();
     self._locationLayer.addTo(self);
   },
 
