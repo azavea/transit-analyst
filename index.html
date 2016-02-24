@@ -153,17 +153,21 @@
         position: "topleft",
     }).addTo(map);
 
+    function moveHighlightedBlock(newPoint) {
+      if (gridLayer) {
+        // Get the object data and call the click event handler,
+        // which will highligh the block group for that lat/lng
+        var object = gridLayer._objectForEvent({latlng: newPoint});
+        if (object.data) {
+          lastHoveredBlockData = object.data;
+          handleHighlightedClick({latlng: newPoint});
+        }
+      }
+    }
+
     geocoder.markGeocode = function(result) {
         map.setView(result.center, 14);
-        if (gridLayer) {
-            // Get the object data and call the click event handler,
-            // which will highligh the block group for that lat/lng
-            var object = gridLayer._objectForEvent({latlng: result.center});
-            if (object.data) {
-                lastHoveredBlockData = object.data;
-                handleHighlightedClick({latlng: result.center});
-            }
-        }
+        moveHighlightedBlock(result.center);
     };
 
     function handleHighlightedClick(e) {
@@ -329,7 +333,9 @@
           $('#info').html('');
           // make sure initally displayed selection matches start value
           d3.select('#pointsets').property('value', pointset);
-    }).addTo(map);
+      }).on('movedlocation', function(pt) {
+          moveHighlightedBlock(pt);
+      }).addTo(map);
 
     var isochroneShowing = false;
     $('#block-info').on('click', '#toggle-travelshed', function(e) {

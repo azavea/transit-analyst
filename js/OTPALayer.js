@@ -55,7 +55,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     this._locationLayer.on('dragend', function(e) {
       self.removeLayer(self._locationLayer);
       self._locationLayer.addTo(self);
-      self._location = self._locationLayer.getLatLng();
+      self.fireEvent('movedlocation', self._locationLayer.getLatLng());
       self._setLocation(self._locationLayer.getLatLng(), true); // UPDATES ISOCHRONE WHEN PIN MOVES
     }).addTo(self);
 
