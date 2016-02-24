@@ -214,8 +214,6 @@
 
     function handleHighlightedClick(e) {
       clickedBlockData = lastHoveredBlockData;
-      console.log(clickedBlockData);
-
       clickedPolygon.clearLayers();
       clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
       updateBlockInfo();
