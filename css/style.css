@@ -52,8 +52,9 @@ h1, h2, h3 {
   overflow-y: auto;
 }
 
-.container {
+.info-container {
   padding: 20px;
+  padding-top: 0;
 }
 
 ul {
@@ -113,7 +114,6 @@ ul {
 #access-list {
     list-style-type: circle;
     padding-left: 20px;
-    padding-top: 10px;
 }
 #access-list li {
     font-size: large;
