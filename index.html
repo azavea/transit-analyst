@@ -161,13 +161,12 @@
             var object = gridLayer._objectForEvent({latlng: result.center});
             if (object.data) {
                 lastHoveredBlockData = object.data;
-                handleHighlightedClick();
+                handleHighlightedClick({latlng: result.center});
             }
         }
     };
 
     function handleHighlightedClick(e) {
-      console.log(e);
       clickedBlockData = lastHoveredBlockData;
       clickedPolygon.clearLayers();
       clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
