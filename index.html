@@ -147,7 +147,7 @@
     var highlightedPolygon = null;
     var lastHoveredBlockData = null;
     var clickedBlockData = null;
-    var clickedPolygon = L.geoJson([], {}).addTo(map);
+    var clickedPolygon = L.geoJson([], {style: {color: '#ff3300'}}).addTo(map);
 
     var geocoder = L.Control.geocoder({
         position: "topleft",
@@ -193,7 +193,7 @@
         map.removeLayer(highlightedPolygon);
       }
 
-      highlightedPolygon = L.geoJson([], {}).addTo(map);
+      highlightedPolygon = L.geoJson([], {style: {color: '#ff5050'} }).addTo(map);
 
       highlightedPolygon.on('click', function(e) {
         handleHighlightedClick(e);
