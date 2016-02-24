@@ -82,8 +82,12 @@
     <% }); %>
     </ul>
     <ul id="access-list">
-        <li><%= label %> Accessibility Percentile : <span class="pull-right"><%= percentile %>%</span></li>
-        <li><%= label %> Accessibility Index : <span class="pull-right"><%= index %></span></li>
+        <li><strong><%= label %> Access Percentile : <span class="pull-right"><%= percentile %>%</span></strong></li>
+        <li><strong><%= label %> Access Index : <span class="pull-right"><%= index %></span></strong></li>
+        <li>Daycare Access Percentile: <span class="pull-right"> <%= daycare_pct %>%</span></li>
+        <li>Daycare Access Index: <span class="pull-right"> <%= daycare_index %></span></li>
+        <li>Park Access Percentile: <span class="pull-right"> <%= parks_pct %>%</span></li>
+        <li>Park Access Index: <span class="pull-right"> <%= parks_index %></span></li>
     </ul>
   </div>
   </script>
@@ -210,6 +214,8 @@
 
     function handleHighlightedClick(e) {
       clickedBlockData = lastHoveredBlockData;
+      console.log(clickedBlockData);
+
       clickedPolygon.clearLayers();
       clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
       updateBlockInfo();
@@ -274,6 +280,10 @@
           label: pointsetLabels.label,
           index: clickedBlockData[pointsetLabels.index],
           percentile: clickedBlockData[pointsetLabels.percentile],
+          daycare_index: clickedBlockData.daycare_access,
+          daycare_pct: clickedBlockData.daycare_access_pct_rank,
+          parks_index: clickedBlockData.park_access,
+          parks_pct: clickedBlockData.park_access_pct_rank
         }));
       }
     }
