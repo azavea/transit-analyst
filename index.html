@@ -166,12 +166,14 @@
         }
     };
 
-    function handleHighlightedClick() {
-        clickedBlockData = lastHoveredBlockData;
-        clickedPolygon.clearLayers();
-        clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
-        updateBlockInfo();
-      }
+    function handleHighlightedClick(e) {
+      console.log(e);
+      clickedBlockData = lastHoveredBlockData;
+      clickedPolygon.clearLayers();
+      clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
+      otpaLayer.setLocation(e.latlng);
+      updateBlockInfo();
+    }
 
     function updateBlockTiles(pointset) {
       var blockTileUrl = blockTileBaseUrl + pointset + '/{z}/{x}/{y}.png';
@@ -191,7 +193,9 @@
 
       highlightedPolygon = L.geoJson([], {}).addTo(map);
 
-      highlightedPolygon.on('click', handleHighlightedClick);
+      highlightedPolygon.on('click', function(e) {
+        handleHighlightedClick(e);
+      });
 
       gridLayer = new L.UtfGrid(blockTileBaseUrl + pointset + '/{z}/{x}/{y}.grid.json', {useJsonP: false});
       gridLayer.on('mouseover', function(e) {
@@ -332,8 +336,8 @@
     $('#block-info').on('click', '#toggle-travelshed', function(e) {
         e.preventDefault();
         if (!isochroneShowing) {
-          var loc = L.latLng(e.target.dataset.lat, e.target.dataset.lng);
-          otpaLayer.setLocation(loc);
+          //var loc = L.latLng(e.target.dataset.lat, e.target.dataset.lng);
+          //otpaLayer.setLocation(loc);
           otpaLayer.showIsochrone(true);
           map.removeLayer(gridLayer);
           highlightedPolygon.clearLayers();
