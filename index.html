@@ -73,7 +73,7 @@
   </div>
   <script type="text/template" id="block-template">
     <h4 style="font-weight: bold;">Census Block <%= geoid10 %></h4>
-    <button href="#" id='toggle-travelshed' data-lat="<%= lat %>" data-lng="<%= lng %>">Show Travelshed</button>
+    <button href="#" id='toggle-travelshed' data-lat="<%= lat %>" data-lng="<%= lng %>"><%= toggleMessage %></button>
     <ul id="bools-list">
     <% _.each(bools, function(item) { %>
       <li class="<%= item.key %> <% if (item.value) { %>active<% } %>" title="<%= item.label %>">
@@ -274,6 +274,7 @@
           geoid10: clickedBlockData.geoid10,
           lat: center.lat,
           lng: center.lng,
+          toggleMessage: isochroneShowing ? "Hide Travelshed" : "Show Travelshed",
           bools: bools,
           label: pointsetLabels.label,
           index: clickedBlockData[pointsetLabels.index],
@@ -385,20 +386,20 @@
 
     var isochroneShowing = false;
     $('#block-info').on('click', '#toggle-travelshed', function(e) {
-        e.preventDefault();
-        if (!isochroneShowing) {
-          otpaLayer.showIsochrone(true);
-          map.removeLayer(gridLayer);
-          highlightedPolygon.clearLayers();
-          $('#isochrone-details').show();
-          $('#toggle-travelshed').text('Hide Travelshed');
-        } else {
-          otpaLayer.showIsochrone(false);
-          map.addLayer(gridLayer);
-          $('#isochrone-details').hide();
-          $('#toggle-travelshed').text('Show Travelshed');
-        }
-        isochroneShowing = !isochroneShowing;
+      e.preventDefault();
+      if (!isochroneShowing) {
+        otpaLayer.showIsochrone(true);
+        map.removeLayer(gridLayer);
+        highlightedPolygon.clearLayers();
+        $('#isochrone-details').show();
+        $('#toggle-travelshed').text('Hide Travelshed');
+      } else {
+        otpaLayer.showIsochrone(false);
+        map.addLayer(gridLayer);
+        $('#isochrone-details').hide();
+        $('#toggle-travelshed').text('Show Travelshed');
+      }
+      isochroneShowing = !isochroneShowing;
     });
 
     // update() calls otpaGraph with a DOM selection as a parameter.
