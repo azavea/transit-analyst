@@ -79,20 +79,64 @@
   <script type="text/template" id="block-template">
     <h4 style="font-weight: bold;">Census Block <%= geoid10 %></h4>
     <button href="#" id='toggle-travelshed' data-lat="<%= lat %>" data-lng="<%= lng %>"><%= toggleMessage %></button>
-    <ul id="bools-list">
+    <ul id="bools-list" class="clearfix">
     <% _.each(bools, function(item) { %>
-      <li class="<%= item.key %> <% if (item.value) { %>active<% } %>" title="<%= item.label %>">
-        <%= item.shortLabel %>
+      <li class="col-xs-4">
+        <span class="<%= item.key %> <% if (item.value) { %>active<% } %>" title="<%= item.label %>">
+          <%= item.shortLabel %>
+        </span>
       </li>
     <% }); %>
     </ul>
     <ul id="access-list">
-        <li><strong><%= label %> Access Percentile : <span class="pull-right"><%= percentile %>%</span></strong></li>
-        <li><strong><%= label %> Access Index : <span class="pull-right"><%= index %></span></strong></li>
-        <li>Daycare Access Percentile: <span class="pull-right"> <%= daycare_pct %>%</span></li>
-        <li>Daycare Access Index: <span class="pull-right"> <%= daycare_index %></span></li>
-        <li>Park Access Percentile: <span class="pull-right"> <%= parks_pct %>%</span></li>
-        <li>Park Access Index: <span class="pull-right"> <%= parks_index %></span></li>
+        <li class="row">
+          <div class="col-xs-10">
+            <strong><%= label %> Access Percentile:</strong>
+          </div>
+          <div class="col-xs-2">
+            <strong><%= percentile %>%</strong>
+          </div>
+        </li>
+        <li class="row">
+          <div class="col-xs-10">
+            <strong><%= label %> Access Index:</strong>
+          </div>
+          <div class="col-xs-2">
+            <strong><%= index %></strong>
+          </div>
+        </li>
+        <li class="row">
+          <div class="col-xs-10">
+            Daycare Access Percentile:
+          </div>
+          <div class="col-xs-2">
+             <%= daycare_pct %>%
+          </div>
+        </li>
+        <li class="row">
+          <div class="col-xs-10">
+            Daycare Access Index:
+          </div>
+          <div class="col-xs-2">
+             <%= daycare_index %>
+          </div>
+        </li>
+        <li class="row">
+          <div class="col-xs-10">
+            Park Access Percentile:
+          </div>
+          <div class="col-xs-2">
+             <%= parks_pct %>%
+          </div>
+        </li>
+        <li class="row">
+          <div class="col-xs-10">
+            Park Access Index:
+          </div>
+          <div class="col-xs-2">
+             <%= parks_index %>
+          </div>
+        </li>
     </ul>
   </div>
   </script>

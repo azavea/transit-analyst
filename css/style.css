@@ -105,26 +105,29 @@ h1, h2, h3 {
 }
 
 #bools-list li {
-    display: inline-block;
+    list-style: none;
     text-align: center;
-    margin: 5px 34px;
+    padding: 5px 0;
+}
+
+#bools-list li > span {
     padding: 5px;
     color: #888;
 }
 
-#bools-list li.active {
+#bools-list .active {
     color: #fff;
 }
 
-#bools-list li.recap_10.active {
+#bools-list .recap_10.active {
     background-color: #459CB0;
 }
 
-#bools-list li.choice_neighborhood.active {
+#bools-list .choice_neighborhood.active {
     background-color: #EAA40C;
 }
 
-#bools-list li.promise_neighborhood.active {
+#bools-list .promise_neighborhood.active {
     background-color: #EA0C0C;
 }
 
@@ -135,12 +138,16 @@ h1, h2, h3 {
 }
 
 #access-list {
-    padding-left: 20px;
+    padding-left: 30px;
+    margin-top: 18px;
 }
 #access-list li {
     font-size: large;
 }
-
-.pull-right {
-    float: right;
+#access-list li div {
+    padding-left: 0;
+    margin-top: -18px;
+}
+#access-list li div:nth-child(2) {
+    text-align: right;
 }
