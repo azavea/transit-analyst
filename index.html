@@ -40,9 +40,8 @@
       <h4>Locations reachable within <span id="minutes">30</span> minutes:</h4>
       <table id="options">
         <tr><td>Travel time:</td><td><div id="slider"></div></td>
-        <!-- <tr><td>Visualization:</td><td><select id="graph-type"></div></td> -->
-        <tr><td>Point set:</td><td><select id="pointsets"></div></td>
-        <tr hidden="true"><td>Indicators:</td><td><select id="indicators"></div></td>
+        <tr><td>Point set:</td><td><select id="pointsets"></select></td>
+        <tr hidden="true"><td>Indicators:</td><td><select id="indicators"></select></td>
       </table>
       <div id="graph"></div>
       <hr>
@@ -160,6 +159,33 @@
     // http://localhost:8080/#192.168.1.103:8080/otp/
     if (location.hash) {
       endpoint = 'http://' + location.hash.slice(1);
+    }
+
+    // From http://codepen.io/gapcode/pen/vEJNZN
+    function detectIE() {
+        var ua = window.navigator.userAgent;
+
+        var msie = ua.indexOf('MSIE ');
+        if (msie > 0) {
+            // IE 10 or older => return version number
+            return parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+        }
+
+        var trident = ua.indexOf('Trident/');
+        if (trident > 0) {
+            // IE 11 => return version number
+            var rv = ua.indexOf('rv:');
+            return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
+        }
+
+        var edge = ua.indexOf('Edge/');
+        if (edge > 0) {
+            // Edge (I​-E 12+) => return version number
+            return parseInt(ua.substring(edge + 5, ua.indexOf('.', edge)), 10);
+        }
+
+        // other browser
+        return false;
     }
 
     var map = L.map('map').setView(philly, 12);
@@ -289,13 +315,19 @@
 
     updateBlockTiles(pointset);
 
+
+    // The range input event is broken on IE <= 11, but the change event is *also* broken in that it behaves like
+    // input is supposed to, so we can use change on IE and input for all the other browsers
+    var ie = detectIE();
+    var sliderEvent = ie !== false && ie <= 11 ? 'change' : 'input';
+
     d3.select('#slider').append('input')
       .attr('type', 'range')
       .attr('min', range.min)
       .attr('max', range.max)
       .attr('step', range.step)
       .attr('value', range.value)
-      .on("input", function() {
+      .on(sliderEvent, function() {
         var value = d3.select(this).property('value');
         range.value = value;
         d3.select('#minutes').html(value); // replace span with # of minutes
