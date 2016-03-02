@@ -32,21 +32,27 @@
   <script src="js/OTPALayer.js"></script>
 </head>
 <body>
-  <div id="map"></div>
-  <div id="box" class="leaflet-bar">
-    <div class="info-container">
-      <h1>Transit Analyst <img src="images/ajax-loader.gif" id="spinner"></h1>
-      <p></p>
-      <h4>Locations reachable within <span id="minutes">30</span> minutes:</h4>
-      <table id="options">
-        <tr><td>Travel time:</td><td><div id="slider"></div></td>
-        <tr><td>Point set:</td><td><select id="pointsets"></select></td>
-        <tr hidden="true"><td>Indicators:</td><td><select id="indicators"></select></td>
-      </table>
-      <div id="graph"></div>
-      <hr>
-      <div id="block-info"></div>
-      <div id="info"></div>
+  <ul class="nav nav-tabs" role="tablist" id="tab-switcher">
+    <li role="presentation" class="active"><a href="#map" aria-controls="home" role="tab" data-toggle="tab">Map</a></li>
+    <li role="presentation"><a href="#box" aria-controls="home" role="tab" data-toggle="tab">Info</a></li>
+  </ul>
+  <div class="tab-content">
+    <div id="map" role="tabpanel" class="tab-pane fade in active"></div>
+    <div id="box" role="tabpanel" class="tab-pane fade">
+      <div class="info-container">
+        <h1>Transit Analyst <img src="images/ajax-loader.gif" id="spinner"></h1>
+        <p></p>
+        <h4>Locations reachable within <span id="minutes">30</span> minutes:</h4>
+        <table id="options">
+          <tr><td>Travel time:</td><td><div id="slider"></div></td>
+          <tr><td>Point set:</td><td><select id="pointsets"></select></td>
+          <tr hidden="true"><td>Indicators:</td><td><select id="indicators"></select></td>
+        </table>
+        <div id="graph"></div>
+        <hr>
+        <div id="block-info"></div>
+        <div id="info"></div>
+      </div>
     </div>
   </div>
   <div class="modal fade" id="legend" tabindex="-1">
