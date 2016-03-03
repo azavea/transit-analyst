@@ -325,6 +325,10 @@
         highlightedPolygon.clearLayers();
         highlightedPolygon.addData(geojson);
       });
+      gridLayer.on('click', function(e) {
+        otpaLayer.setLocation(e.latlng);
+        moveHighlightedBlock(e.latlng);
+      });
       map.addLayer(gridLayer);
     }
 

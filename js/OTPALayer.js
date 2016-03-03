@@ -60,13 +60,15 @@ L.OTPALayer = L.FeatureGroup.extend({
     }).addTo(self);
 
     var onEachPoint = function(feature, layer) {
-      layer.on({
-        mouseover: function (e) {
-          self._highlightedLayer.clearLayers();
-          self._highlightedLayer.addData(feature);
+      function pointSelected (e) {
+        self._highlightedLayer.clearLayers();
+        self._highlightedLayer.addData(feature);
 
-          self.fireEvent('select', {data: layer.feature.properties});
-        },
+        self.fireEvent('select', {data: layer.feature.properties});
+      }
+      layer.on({
+        mouseover: pointSelected,
+        click: pointSelected,
       });
     }
 
