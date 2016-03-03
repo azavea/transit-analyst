@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Transit-analyst by flibbertigibbet</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Transit-analyst</h1>
+        <p>An interactive tool for exploring transit accessibility to target resources from focus areas.</p>
+
+        <p class="view"><a href="https://github.com/flibbertigibbet/transit-analyst">View the Project on GitHub <small>flibbertigibbet/transit-analyst</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/flibbertigibbet/transit-analyst/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/flibbertigibbet/transit-analyst/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/flibbertigibbet/transit-analyst">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="transit-analyst-methodology-and-data-sources" class="anchor" href="#transit-analyst-methodology-and-data-sources" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Transit Analyst Methodology and Data Sources</h1>
+
+<h2>
+<a id="transit-times-calculation" class="anchor" href="#transit-times-calculation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Transit Times Calculation</h2>
+
+<p>This study calculates travel times from each Census block in the MSA to every block accessible within one hour of the MSA region, as well as travel times to each of the points in the point set data (healthcare clinics, Head Start locations, etc.). These travel times were calculated six times at six minute offsets within the half hour window between 5:30 and 6:00 pm on Wednesday, January 20th, 2016. The study averages together the travel times for each of the six runs to calculate the transit accessibility indices.</p>
+
+<h2>
+<a id="index-values-calculation" class="anchor" href="#index-values-calculation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Index Values Calculation</h2>
+
+<p>The application presents transit accessibility index values from Census blocks to:</p>
+
+<ul>
+<li>healthy cornerstores</li>
+<li>health care clinics</li>
+<li>Head Start locations</li>
+<li>daycare</li>
+<li>playgrounds</li>
+<li>recreation centers</li>
+<li>parks</li>
+</ul>
+
+<p>The accessibility index calculation bins accessible unit counts to one-minute increments of walk/transit time, weights them using a negative exponential weighting factor, as described in the methodology report for the <a href="http://access.umn.edu/research/america/transit/2014/">Access Across America 2014 study of job transit accessibility</a>, which in turn cites Levinson and Kumar's 1994 paper, <em>Multimodal trip distribution: structure and application</em> <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.145.1894&amp;rep=rep1&amp;type=pdf">(PDF)</a>. This study uses the -0.07 weighting factor listed by Levinson and Kumar (p.24), instead of the -0.08 work trip weighting factor used by the Access Across America study.</p>
+
+<p>The study uses simple counts of accessible locations for most destinations, with the exception of daycare, which sums the counts of daycare seats accessible. Most of the destination data sets are points, for which the study calculates travel times from each Census block centroid to each destination point in the set. The exceptions are daycare and park access travel time calculations, which use the travel times to other Census blocks instead.</p>
+
+<p>The daycare data source aggregates seat counts to the block group level; this study disaggregates the daycare seat counts to the block level by dividing the seat count evenly among the blocks in the group. The parks data source holds polygons. This study counts the park polygons that intersect with each Census block to get the accessible park count by block.</p>
+
+<h2>
+<a id="data-sources" class="anchor" href="#data-sources" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Data Sources</h2>
+
+<h3>
+<a id="pointset-data" class="anchor" href="#pointset-data" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Pointset data</h3>
+
+<ul>
+<li>Head Start centers: <a href="http://eclkc.ohs.acf.hhs.gov/hslc/data/center-data">HHS</a>
+</li>
+<li>day care: <a href="https://www.opendataphilly.org/dataset/childcare-map">City of Philadelphia</a>
+</li>
+<li>parks: <a href="https://www.opendataphilly.org/dataset/ppr-districts">City of Philadelphia</a>
+</li>
+<li>recreation centers: <a href="https://www.opendataphilly.org/dataset/city-facilities-master-facilities-database">City of Philadelphia</a>
+</li>
+<li>healthy cornerstores: <a href="https://www.opendataphilly.org/dataset/healthy-corner-store-locations">City of Philadelphia</a>
+</li>
+<li>playgrounds: <a href="http://www.pasda.psu.edu/uci/MetadataDisplay.aspx?entry=PASDA&amp;file=Philadelphia_PPR_Playgrounds201302.xml&amp;dataset=1584">City of Philadelphia</a>
+</li>
+<li>health clinics: <a href="http://datawarehouse.hrsa.gov/tools/dataportal.aspx">HHS</a>
+(Note: there are thirteen additional health centers in <a href="https://www.opendataphilly.org/dataset/health-centers">this City of Philadelphia health center dataset</a> not in the HHS dataset; those additional centers were not included in this study.)</li>
+</ul>
+
+<h3>
+<a id="demographic-data" class="anchor" href="#demographic-data" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Demographic data</h3>
+
+<ul>
+<li>Promise and Choice Neighborhoods: <a href="https://www.whitehouse.gov/omb/place/datasets">OMB</a>
+</li>
+<li>RECAP areas: <a href="http://egis.hud.opendata.arcgis.com/datasets/320b8ab5d0304daaa7f1b8c03ff01256_0">HUD</a>
+</li>
+</ul>
+
+<h3>
+<a id="transit-data" class="anchor" href="#transit-data" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Transit data</h3>
+
+<ul>
+<li><a href="http://www3.septa.org/developer/">SEPTA</a></li>
+<li><a href="https://www.njtransit.com/developer">NJ TRANSIT</a></li>
+<li><a href="http://www.ridepatco.org/developers/">PATCO</a></li>
+<li><a href="http://www.dartfirststate.com/information/routes/">DART</a></li>
+</ul>
+
+<h3>
+<a id="street-network" class="anchor" href="#street-network" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Street network</h3>
+
+<p>Street network data comes from <a href="https://www.openstreetmap.org">OpenStreetMap</a>.</p>
+
+<p>Data was acquired in January 2016.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/flibbertigibbet">flibbertigibbet</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
