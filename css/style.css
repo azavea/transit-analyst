@@ -47,6 +47,9 @@ h1, h2, h3 {
 #tab-switcher {
     display: none;
 }
+.help-small {
+display: none;
+}
 
 @media (max-width: 1023px) {
   .nav-tabs>li {
@@ -70,6 +73,9 @@ h1, h2, h3 {
   }
   .leaflet-bottom .leaflet-control.leaflet-bar {
     margin-bottom: 40px;
+  }
+  .help-small {
+    display: list-item;
   }
 }
 @media (min-width: 1024px) {
