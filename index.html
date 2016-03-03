@@ -274,6 +274,7 @@
         var geojson = JSON.parse(e.data.geojson);
         highlightedPolygon.clearLayers();
         highlightedPolygon.addData(geojson);
+        highlightedPolygon.bringToBack();
       });
       map.addLayer(gridLayer);
     }
