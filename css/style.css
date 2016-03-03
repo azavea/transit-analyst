@@ -40,16 +40,49 @@ h1, h2, h3 {
   position: absolute;
   background-color: white;
   overflow-y: auto;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+  border-radius: 4px;
 }
 
-#info-box {
-  bottom: 18px;
-  right: 10px;
-  width: 460px;
-  max-height: calc(100% - 30px);
-  position: absolute;
-  background-color: white;
-  overflow-y: auto;
+#tab-switcher {
+    display: none;
+}
+.help-small {
+display: none;
+}
+
+@media (max-width: 1023px) {
+  .nav-tabs>li {
+    width: 50%;
+  }
+  #tab-switcher {
+    display: block;
+    height: 42px;
+  }
+  #map {
+    height: calc(100% - 42px);
+  }
+  #box {
+    width: 100%;
+    height: 100%;
+    top: 42px;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    box-shadow: none;
+  }
+  .leaflet-bottom .leaflet-control.leaflet-bar {
+    margin-bottom: 40px;
+  }
+  .help-small {
+    display: list-item;
+  }
+}
+@media (min-width: 1024px) {
+  #box {
+    display: block;
+    opacity: 1;
+  }
 }
 
 .info-container {
@@ -78,26 +111,29 @@ h1, h2, h3 {
 }
 
 #bools-list li {
-    display: inline-block;
+    list-style: none;
     text-align: center;
-    margin: 5px 34px;
+    padding: 5px 0;
+}
+
+#bools-list li > span {
     padding: 5px;
     color: #888;
 }
 
-#bools-list li.active {
+#bools-list .active {
     color: #fff;
 }
 
-#bools-list li.recap_10.active {
+#bools-list .recap_10.active {
     background-color: #459CB0;
 }
 
-#bools-list li.choice_neighborhood.active {
+#bools-list .choice_neighborhood.active {
     background-color: #EAA40C;
 }
 
-#bools-list li.promise_neighborhood.active {
+#bools-list .promise_neighborhood.active {
     background-color: #EA0C0C;
 }
 
@@ -108,12 +144,16 @@ h1, h2, h3 {
 }
 
 #access-list {
-    padding-left: 20px;
+    padding-left: 30px;
+    margin-top: 18px;
 }
 #access-list li {
     font-size: large;
 }
-
-.pull-right {
-    float: right;
+#access-list li div {
+    padding-left: 0;
+    margin-top: -18px;
+}
+#access-list li div:nth-child(2) {
+    text-align: right;
 }

@@ -8,8 +8,8 @@ d3.otpaGraphBar = function module() {
   "use strict";
 
   // Private variables
-  var margin = {top: 10, right: 0, bottom: 10, left: 125},
-      width = 480 - margin.left - margin.right,
+  var margin = {top: 10, right: 0, bottom: 10, left: 50},
+      width = 300 - margin.left - margin.right,
       height = 200 - margin.top - margin.bottom,
       barGap = 20, // including text
       axisHeight = 50,

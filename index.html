@@ -3,7 +3,7 @@
 <head>
 	<title>Transit Analyst</title>
 	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="viewport" content="initial-scale=1.0001, minimum-scale=1.0001, maximum-scale=1.0001, user-scalable=no">
 	<link rel="stylesheet" href="css/style.css" />
 	<link rel="stylesheet" href="css/otpagraph.css" />
 	<link rel="stylesheet" href="css/leaflet.css" />
@@ -32,21 +32,27 @@
   <script src="js/OTPALayer.js"></script>
 </head>
 <body>
-  <div id="map"></div>
-  <div id="box" class="leaflet-bar">
-    <div class="info-container">
-      <h1>Transit Analyst <img src="images/ajax-loader.gif" id="spinner"></h1>
-      <p></p>
-      <h4>Locations reachable within <span id="minutes">30</span> minutes:</h4>
-      <table id="options">
-        <tr><td>Travel time:</td><td><div id="slider"></div></td>
-        <tr><td>Point set:</td><td><select id="pointsets"></select></td>
-        <tr hidden="true"><td>Indicators:</td><td><select id="indicators"></select></td>
-      </table>
-      <div id="graph"></div>
-      <hr>
-      <div id="block-info"></div>
-      <div id="info"></div>
+  <ul class="nav nav-tabs" role="tablist" id="tab-switcher">
+    <li role="presentation" class="active"><a id="map-tab" href="#map" aria-controls="home" role="tab" data-toggle="tab">Map</a></li>
+    <li role="presentation"><a href="#box" aria-controls="home" role="tab" data-toggle="tab">Info</a></li>
+  </ul>
+  <div class="tab-content">
+    <div id="map" role="tabpanel" class="tab-pane fade in active"></div>
+    <div id="box" role="tabpanel" class="tab-pane fade">
+      <div class="info-container">
+        <h1>Transit Analyst <img src="images/ajax-loader.gif" id="spinner"></h1>
+        <p></p>
+        <h4>Locations reachable within <span id="minutes">30</span> minutes:</h4>
+        <table id="options">
+          <tr><td>Travel time:</td><td><div id="slider"></div></td>
+          <tr><td>Point set:</td><td><select id="pointsets"></select></td>
+          <tr hidden="true"><td>Indicators:</td><td><select id="indicators"></select></td>
+        </table>
+        <div id="graph"></div>
+        <hr>
+        <div id="block-info"></div>
+        <div id="info"></div>
+      </div>
     </div>
   </div>
   <div class="modal fade" id="legend" tabindex="-1">
@@ -62,8 +68,9 @@
           </h4>
           <ul style="margin-left: 20px">
             <li>The <img src="js/images/marker-icon.png" style="width: 15px"> marker shows the current location. The black points are those accesible from that point within the selected travel time, and the gray points are not accessible.</li>
-            <li>Choose a pointset to explore, and hover over the points to see information for that location.</li>
-            <li>Move the mouse over the map to show blocks, and click on a block to see detailed information for that block.</li>
+            <li class="help-small">Click or tap on the "Info" tab to see detailed information for the current location</li>
+            <li>Choose a pointset to explore, and hover over or tap the points to see information for that location.</li>
+            <li>Move the mouse over the map to show blocks, and click or tap on a block to see detailed information for that block.</li>
             <li>The "Show Travelshed" button will bring up a travelshed centered on the marker.  Each band of color represents an area that can be traveled to on public transit, in 15 minute increments.</li>
           </ul>
         </div>
@@ -73,20 +80,64 @@
   <script type="text/template" id="block-template">
     <h4 style="font-weight: bold;">Census Block <%= geoid10 %></h4>
     <button href="#" id='toggle-travelshed' data-lat="<%= lat %>" data-lng="<%= lng %>"><%= toggleMessage %></button>
-    <ul id="bools-list">
+    <ul id="bools-list" class="clearfix">
     <% _.each(bools, function(item) { %>
-      <li class="<%= item.key %> <% if (item.value) { %>active<% } %>" title="<%= item.label %>">
-        <%= item.shortLabel %>
+      <li class="col-xs-4">
+        <span class="<%= item.key %> <% if (item.value) { %>active<% } %>" title="<%= item.label %>">
+          <%= item.shortLabel %>
+        </span>
       </li>
     <% }); %>
     </ul>
     <ul id="access-list">
-        <li><strong><%= label %> Access Percentile : <span class="pull-right"><%= percentile %>%</span></strong></li>
-        <li><strong><%= label %> Access Index : <span class="pull-right"><%= index %></span></strong></li>
-        <li>Daycare Access Percentile: <span class="pull-right"> <%= daycare_pct %>%</span></li>
-        <li>Daycare Access Index: <span class="pull-right"> <%= daycare_index %></span></li>
-        <li>Park Access Percentile: <span class="pull-right"> <%= parks_pct %>%</span></li>
-        <li>Park Access Index: <span class="pull-right"> <%= parks_index %></span></li>
+        <li class="row">
+          <div class="col-xs-10">
+            <strong><%= label %> Access Percentile:</strong>
+          </div>
+          <div class="col-xs-2">
+            <strong><%= percentile %>%</strong>
+          </div>
+        </li>
+        <li class="row">
+          <div class="col-xs-10">
+            <strong><%= label %> Access Index:</strong>
+          </div>
+          <div class="col-xs-2">
+            <strong><%= index %></strong>
+          </div>
+        </li>
+        <li class="row">
+          <div class="col-xs-10">
+            Daycare Access Percentile:
+          </div>
+          <div class="col-xs-2">
+             <%= daycare_pct %>%
+          </div>
+        </li>
+        <li class="row">
+          <div class="col-xs-10">
+            Daycare Access Index:
+          </div>
+          <div class="col-xs-2">
+             <%= daycare_index %>
+          </div>
+        </li>
+        <li class="row">
+          <div class="col-xs-10">
+            Park Access Percentile:
+          </div>
+          <div class="col-xs-2">
+             <%= parks_pct %>%
+          </div>
+        </li>
+        <li class="row">
+          <div class="col-xs-10">
+            Park Access Index:
+          </div>
+          <div class="col-xs-2">
+             <%= parks_index %>
+          </div>
+        </li>
     </ul>
   </div>
   </script>
@@ -119,7 +170,7 @@
         indicator = 'placeholder',
         indicators = {},
         graphType = graphTypes[0].type,
-        visWidth = 300,
+        visWidth = 200,
         otpaGraph = d3.otpaGraph().type(graphType).width(visWidth),
 
         dataLabels = [
@@ -275,6 +326,10 @@
         highlightedPolygon.clearLayers();
         highlightedPolygon.addData(geojson);
         highlightedPolygon.bringToBack();
+      });
+      gridLayer.on('click', function(e) {
+        otpaLayer.setLocation(e.latlng);
+        moveHighlightedBlock(e.latlng);
       });
       map.addLayer(gridLayer);
     }
@@ -433,6 +488,7 @@
         $('#toggle-travelshed').text('Show Travelshed');
       }
       isochroneShowing = !isochroneShowing;
+      $('#map-tab').tab('show');
     });
 
     // update() calls otpaGraph with a DOM selection as a parameter.
