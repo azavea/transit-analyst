@@ -21,11 +21,31 @@ The study uses simple counts of accessible locations for most destinations, with
 The daycare data source aggregates seat counts to the block group level; this study disaggregates the daycare seat counts to the block level by dividing the seat count evenly among the blocks in the group. The parks data source holds polygons. This study counts the park polygons that intersect with each Census block to get the accessible park count by block.
 
 ## Data Sources
-Street network data comes from OpenStreetMap. Transit data comes from the following agencies:
 
-  - SEPTA
-  - NJ TRANSIT
-  - PATCO
-  - DART
+### Pointset data
+
+  - Head Start centers: [HHS](http://eclkc.ohs.acf.hhs.gov/hslc/data/center-data)
+  - day care: [City of Philadelphia](https://www.opendataphilly.org/dataset/childcare-map)
+  - parks: [City of Philadelphia](https://www.opendataphilly.org/dataset/ppr-districts)
+  - recreation centers: [City of Philadelphia](https://www.opendataphilly.org/dataset/city-facilities-master-facilities-database)
+  - healthy cornerstores: [City of Philadelphia](https://www.opendataphilly.org/dataset/healthy-corner-store-locations)
+  - playgrounds: [City of Philadelphia](http://www.pasda.psu.edu/uci/MetadataDisplay.aspx?entry=PASDA&file=Philadelphia_PPR_Playgrounds201302.xml&dataset=1584)
+  - health clinics: [HHS](http://datawarehouse.hrsa.gov/tools/dataportal.aspx)
+    (Note: there are thirteen additional health centers in [this City of Philadelphia health center dataset](https://www.opendataphilly.org/dataset/health-centers) not in the HHS dataset; those additional centers were not included in this study.)
+
+### Demographic data
+
+  - Promise and Choice Neighborhoods: [OMB](https://www.whitehouse.gov/omb/place/datasets)
+  - RECAP areas: [HUD](http://egis.hud.opendata.arcgis.com/datasets/320b8ab5d0304daaa7f1b8c03ff01256_0)
+
+### Transit data
+
+  - [SEPTA](http://www3.septa.org/developer/)
+  - [NJ TRANSIT](https://www.njtransit.com/developer)
+  - [PATCO](http://www.ridepatco.org/developers/)
+  - [DART](http://www.dartfirststate.com/information/routes/)
+
+### Street network
+Street network data comes from [OpenStreetMap](https://www.openstreetmap.org).
 
 Data was acquired in January 2016.
