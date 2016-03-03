@@ -33,7 +33,7 @@
 </head>
 <body>
   <ul class="nav nav-tabs" role="tablist" id="tab-switcher">
-    <li role="presentation" class="active"><a href="#map" aria-controls="home" role="tab" data-toggle="tab">Map</a></li>
+    <li role="presentation" class="active"><a id="map-tab" href="#map" aria-controls="home" role="tab" data-toggle="tab">Map</a></li>
     <li role="presentation"><a href="#box" aria-controls="home" role="tab" data-toggle="tab">Info</a></li>
   </ul>
   <div class="tab-content">
@@ -482,6 +482,7 @@
         $('#toggle-travelshed').text('Show Travelshed');
       }
       isochroneShowing = !isochroneShowing;
+      $('#map-tab').tab('show');
     });
 
     // update() calls otpaGraph with a DOM selection as a parameter.
