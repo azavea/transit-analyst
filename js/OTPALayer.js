@@ -320,25 +320,38 @@ L.OTPALayer = L.FeatureGroup.extend({
   _postJSON: function(path, callback) {
     var self = this;
     self._showSpinner();
-    d3.xhr(this._endpoint + path).post(null, function(error, data) {
-      self._hideSpinner();
-      if (data && data.response) {
-        callback(JSON.parse(data.response));
+
+    $.ajax({
+      url: this._endpoint + path,
+      type: 'POST',
+      dataType: 'json',
+      data: null,
+      xhrFields: {
+        withCredentials: true
+      },
+      crossDomain: true,
+      success: function(json) {
+        self._hideSpinner();
+        callback(json);
       }
-    }).on("beforesend", function(request) {
-      request.withCredentials = true;
     });
   },
 
   _getJSON: function(path, callback) {
     var self = this;
     self._showSpinner();
-    // Uses D3's json call. TODO: replace with regular JS ajax call?
-    d3.json(this._endpoint + path, function(json) {
+
+    $.ajax({
+      url: this._endpoint + path,
+      dataType: 'json',
+      xhrFields: {
+        withCredentials: true
+      },
+      crossDomain: true,
+      success: function(json) {
         self._hideSpinner();
         callback(json);
-    }).on("beforesend", function(request) {
-      request.withCredentials = true;
+      }
     });
   },
 
