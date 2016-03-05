@@ -325,6 +325,8 @@ L.OTPALayer = L.FeatureGroup.extend({
       if (data && data.response) {
         callback(JSON.parse(data.response));
       }
+    }).on("beforesend", function(request) {
+      request.withCredentials = true;
     });
   },
 
@@ -335,6 +337,8 @@ L.OTPALayer = L.FeatureGroup.extend({
     d3.json(this._endpoint + path, function(json) {
         self._hideSpinner();
         callback(json);
+    }).on("beforesend", function(request) {
+      request.withCredentials = true;
     });
   },
 
