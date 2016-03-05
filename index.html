@@ -240,6 +240,21 @@
         return false;
     }
 
+    /**
+     * Set a session cookie so that subsequent GET requests can be pinned to the same server
+     * as the one used to generate the TimeSurface with the ID in use.
+    */
+    function setCookie() {
+      // generate a UUID: http://stackoverflow.com/a/2117523
+      var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+          return v.toString(16);
+      });
+      document.cookie = "transitanalyst=" + uuid + "; path=/";
+    }
+
+    setCookie();
+
     var map = L.map('map').setView(philly, 12);
 
     L.tileLayer(basemapUrl, {
