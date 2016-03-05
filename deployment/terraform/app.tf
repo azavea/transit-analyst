@@ -95,6 +95,13 @@ resource "aws_elb" "app" {
   }
 }
 
+resource "aws_app_cookie_stickiness_policy" "app" {
+  name = "transitanalyst"
+  load_balancer = "${aws_elb.app.name}"
+  lb_port = 80
+  cookie_name = "transitanalyst"
+}
+
 #
 # AutoScaling resources
 #
