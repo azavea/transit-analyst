@@ -95,11 +95,11 @@ resource "aws_elb" "app" {
   }
 }
 
-resource "aws_app_cookie_stickiness_policy" "app" {
-  name = "transitanalyst"
-  load_balancer = "${aws_elb.app.name}"
+resource "aws_lb_cookie_stickiness_policy" "app" {
+  name = "transitanalyst-lb"
+  load_balancer = "${aws_elb.app.id}"
   lb_port = 80
-  cookie_name = "transitanalyst"
+  cookie_expiration_period = 1200
 }
 
 #
