@@ -1,6 +1,0 @@
-- min/max/current value labels for slider
-- Use labels from server's schema JSON
-- Pointset map objects should have proper colors
-- Objects popup with properties on click
-- Map legend - isochrone colors
-- line graph should have numbers/labels
