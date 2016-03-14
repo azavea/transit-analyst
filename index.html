@@ -276,8 +276,10 @@
     });
     map.addControl(new LegendControl());
 
+    var curLocation = philly;
     var blockTileLayer = null;
     var gridLayer = null;
+    var gridLoaded = null;
     var highlightedPolygon = null;
     var lastHoveredBlockData = null;
     var clickedBlockData = null;
@@ -288,28 +290,34 @@
     }).addTo(map);
 
     function moveHighlightedBlock(newPoint) {
-      if (gridLayer) {
-        // Get the object data and call the click event handler,
-        // which will highlight the block group for that lat/lng
-        var object = gridLayer._objectForEvent({latlng: newPoint});
-        if (object.data) {
-          lastHoveredBlockData = object.data;
-          handleHighlightedClick({latlng: newPoint});
-        }
-      }
+      handleHighlightedClick({latlng: newPoint});
     }
 
     geocoder.markGeocode = function(result) {
         map.setView(result.center, 14);
         moveHighlightedBlock(result.center);
-        otpaLayer.setLocation(result.center);
     };
 
     function handleHighlightedClick(e) {
-      clickedBlockData = lastHoveredBlockData;
-      clickedPolygon.clearLayers();
-      clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
-      updateBlockInfo();
+      if (gridLoaded) {
+        gridLoaded.done(function() {
+          // Get the object data and call the click event handler,
+          // which will highlight the block group for that lat/lng
+          var object = gridLayer._objectForEvent(e);
+          if (object.data) {
+            clickedBlockData = object.data;
+            clickedPolygon.clearLayers();
+            clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
+            updateBlockInfo();
+            var center = clickedPolygon.getBounds().getCenter();
+            otpaLayer.setLocation(center);
+            curLocation = center;
+          } else {
+            // If there is no block, move the location back to the last spot
+            otpaLayer.setLocation(curLocation);
+          }
+        });
+      }
     }
 
     function updateBlockTiles(pointset) {
@@ -332,7 +340,6 @@
 
       highlightedPolygon.on('click', function(e) {
         handleHighlightedClick(e);
-        otpaLayer.setLocation(e.latlng);
       });
 
       gridLayer = new L.UtfGrid(blockTileBaseUrl + pointset + '/{z}/{x}/{y}.grid.json', {useJsonP: false});
@@ -344,10 +351,28 @@
         highlightedPolygon.bringToBack();
       });
       gridLayer.on('click', function(e) {
-        otpaLayer.setLocation(e.latlng);
         moveHighlightedBlock(e.latlng);
       });
       map.addLayer(gridLayer);
+
+      function resetDeferred() {
+        gridLoaded = $.Deferred();
+        setTimeout(function() {
+          // If there are no requests queued, assume we already loaded all the grid tiles
+          // This can happen even after UI change due to caching
+          if (gridLayer._request_queue.length === 0) {
+            gridLoaded.resolve();
+          }
+        }, 1);
+      }
+      // When the map is moved or zoomed, reset the deferred object
+      map.on('movestart', resetDeferred);
+      map.on('viewreset', resetDeferred);
+      map.on('zoomstart', resetDeferred);
+      resetDeferred();
+      gridLayer.on('load', function() {
+        gridLoaded.resolve();
+      });
     }
 
     function updateBlockInfo() {
