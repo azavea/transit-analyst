@@ -56,7 +56,6 @@ L.OTPALayer = L.FeatureGroup.extend({
       self.removeLayer(self._locationLayer);
       self._locationLayer.addTo(self);
       self.fireEvent('movedlocation', self._locationLayer.getLatLng());
-      self._setLocation(self._locationLayer.getLatLng(), true); // UPDATES ISOCHRONE WHEN PIN MOVES
     }).addTo(self);
 
     var onEachPoint = function(feature, layer) {
@@ -96,30 +95,32 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     self.addLayer(this._pointsetLayer);
 
-    self._createSurface(this._location, true, false).then(function() {
+    self._createSurface(true, false).then(function() {
       self.fireEvent('movedlocation', self._location);
     });
 
     return self;
   },
 
-  setLocation: function (latlng) {
+  setLocation: function (latlng, originId, showIsochrone) {
     this._locationLayer.setLatLng(latlng);
-    this._setLocation(latlng, false);
+    this._setLocation(latlng, originId, showIsochrone);
   },
 
-  _setLocation: function (latlng, showIsochrone) {
+  _setLocation: function (latlng, originId, showIsochrone) {
     var self = this;
     self._location = latlng;
-    self._createSurface(self._location, false, showIsochrone);
+    self._originId = originId;
+    self._createSurface(false, showIsochrone);
   },
 
   setPointset: function (pointset) {
     var self = this;
     self._pointset = pointset;
+
     self._getPointset(self._pointset).then(function() {
-      if (self._surface && self._surface.id) {
-        self._updateIsochronesIndicators(self._surface.id);
+      if (self._originId) {
+        self._updateIsochronesIndicators(true);
       }
     });
   },
@@ -135,8 +136,8 @@ L.OTPALayer = L.FeatureGroup.extend({
   showIsochrone: function (shouldShow) {
     var self = this;
     this._showIsochrone = shouldShow;
-    if (self._surface) {
-      self._getIsochrones(self._surface.id);
+    if (self._originId) {
+      self._getIsochrones();
     } else if (this._surfaceLayer != null) {
       self.removeLayer(this._surfaceLayer);
     }
@@ -177,60 +178,41 @@ L.OTPALayer = L.FeatureGroup.extend({
     };
   },
 
-  _createSurface: function(location, getPointset, updateIsochrone) {
+  _createSurface: function(getPointset, updateIsochrone) {
     var self = this;
 
     var dfd = $.Deferred();
 
-    this._otpRequestParams = 'fromPlace=' + location.lat + ',' + location.lng
-        + '&date=2016-01-20&time=06:00pm'
-        + '&maxWalkDistance=3218.69' // 2 mi
-        + '&mode=TRANSIT,WALK';
-
-    var path = 'surfaces?'
-        + this._otpRequestParams
-        + '&cutoffMinutes=' + this._cutoffMinutes
-        + '&batch=true';
-
-    self._postJSON(path, function(json) {
-
-      if (json && json.id) {
-        self._surface = json;
-      }
-
-      if (getPointset && self._pointset) {
-        self._getPointset(self._pointset).then(function() {
-          if (json && json.id) {
-            self._updateIsochronesIndicators(json.id, updateIsochrone);
-          }
-          dfd.resolve();
-        });
-      } else {
-        if (json && json.id) {
-          self._updateIsochronesIndicators(json.id, updateIsochrone);
+    if (getPointset && self._pointset) {
+      self._getPointset(self._pointset).then(function() {
+        if (self._originId) {
+          self._updateIsochronesIndicators(updateIsochrone);
         }
         dfd.resolve();
-      }
-    });
+      });
+    } else {
+    if (self._originId) {
+      self._updateIsochronesIndicators(updateIsochrone);
+    }
+    dfd.resolve();
+    }
 
     return dfd.promise();
   },
 
-  _updateIsochronesIndicators: function(surfaceId, updateIsochrone) {
+  _updateIsochronesIndicators: function(updateIsochrone) {
     var self = this;
     if (self._pointset) {
-      self._getIndicator(surfaceId, self._pointset);
+      self._getIndicator(self._pointset);
     }
     if (updateIsochrone) {
-        self._getIsochrones(surfaceId);
+        self._getIsochrones();
     }
   },
 
-  _getIndicator: function(surfaceId, pointset) {
+  _getIndicator: function(pointset) {
     var self = this;
-    var path = 'surfaces/' + surfaceId
-        + '/indicator'
-        + '?targets=' + pointset + '&includeHistograms=true';
+    var path = 'otp_json/' + pointset + '_' + self._originId + '.json';
     this._getJSON(path, function(indicator) {
       self._indicator = indicator;
       self.fireEvent('change', {data: indicator});
@@ -258,7 +240,7 @@ L.OTPALayer = L.FeatureGroup.extend({
     this._highlightedLayer.bringToFront();
   },
 
-  _getIsochrones: function(surfaceId) {
+  _getIsochrones: function() {
     var self = this;
 
     if (this._surfaceLayer != null) {
@@ -267,8 +249,8 @@ L.OTPALayer = L.FeatureGroup.extend({
 
     self.removeLayer(self._locationLayer);
     if (this._showIsochrone) {
-      var tileUrl = this._endpoint + 'surfaces/' + surfaceId + '/isotiles/{z}/{x}/{y}.png';
-      self._surfaceLayer = L.tileLayer(tileUrl, {maxZoom:18}).addTo(self);
+      var tileUrl = this._endpoint + 'otp_tiles/origin_' + self._originId + '/{z}/{x}/{y}.png';
+      self._surfaceLayer = L.tileLayer(tileUrl, {maxZoom:14, minZoom: 9}).addTo(self);
 
       // re-add pointset layers to handle z-indexes
       self.removeLayer(self._pointsetLayer);
@@ -292,7 +274,7 @@ L.OTPALayer = L.FeatureGroup.extend({
   },
 
   _getPointsets: function(callback) {
-    var path = 'pointsets';
+    var path = 'pointsets.json';
     return this._getJSON(path, callback);
   },
 
@@ -300,10 +282,8 @@ L.OTPALayer = L.FeatureGroup.extend({
     var self = this;
     var dfd = $.Deferred();
 
-    var path = 'pointsets/' + this._pointset;
+    var path = 'pointsets/' + this._pointset + '.json';
     this._getJSON(path, function(pointset) {
-      // TODO: have total count here as "n"; use for graph totals, if summary
-      // (have modified backend to always return all as geojson, instead of summary if > 200)
       self._pointsetData = pointset;
       self._pointsetLayer.clearLayers();
       self._filteredPointsetLayer.clearLayers();
@@ -326,9 +306,6 @@ L.OTPALayer = L.FeatureGroup.extend({
       type: 'POST',
       dataType: 'json',
       data: null,
-      xhrFields: {
-        withCredentials: true
-      },
       crossDomain: true,
       success: function(json) {
         self._hideSpinner();
@@ -344,9 +321,6 @@ L.OTPALayer = L.FeatureGroup.extend({
     $.ajax({
       url: this._endpoint + path,
       dataType: 'json',
-      xhrFields: {
-        withCredentials: true
-      },
       crossDomain: true,
       success: function(json) {
         self._hideSpinner();

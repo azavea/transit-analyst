@@ -150,9 +150,9 @@
   </div>
   </script>
   <script>
-    var endpoint = 'http://otp.transitanalyst.com/otp/',
+    var endpoint = 'https://s3.amazonaws.com/transitanalyst/',
         basemapUrl= 'http://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png',
-        blockTileBaseUrl = 'http://transitanalyst.com/tiles/';
+        blockTileBaseUrl = 'https://s3.amazonaws.com/transitanalyst/windshaft_tiles/';
         range = {
           value: 30,
           min: 1,
@@ -167,7 +167,7 @@
           {type: 'table', label: 'Table'},
           {type: 'density', label: 'Density'}
         ],
-        pointset = 'headstart.geo',
+        pointset = 'headstart',
         indicator = 'placeholder',
         indicators = {},
         graphType = graphTypes[0].type,
@@ -180,38 +180,32 @@
             ['choice_neighborhood', 'Is a Choice Neighborhood', 'CHOICE'],
         ],
         datasetLabels = {
-            'cornerstores.geo': {
+            'cornerstores': {
                 'percentile': 'cornerstore_access_pct_rank',
                 'label': 'Cornerstore',
                 'index': 'cornerstore_access'
             },
-            'headstart.geo': {
+            'headstart': {
                 'percentile': 'headstart_access_pct_rank',
                 'label': 'Headstart Center',
                 'index': 'headstart_access'
             },
-            'healthcare.geo': {
+            'healthcare': {
                 'percentile': 'healthcare_access_pct_rank',
                 'label': 'Health Clinic',
                 'index': 'healthcare_access'
             },
-            'rec.geo': {
+            'rec': {
                 'percentile': 'rec_access_pct_rank',
                 'label': 'Recreation Center',
                 'index': 'rec_access'
             },
-            'playgrounds.geo': {
+            'playgrounds': {
                 'percentile': 'playground_access_pct_rank',
                 'label': 'Playground',
                 'index': 'playground_access'
             },
         };
-
-    // Use location hash to specify URL of OTPA endpoint:
-    // http://localhost:8080/#192.168.1.103:8080/otp/
-    if (location.hash) {
-      endpoint = 'http://' + location.hash.slice(1);
-    }
 
     // From http://codepen.io/gapcode/pen/vEJNZN
     function detectIE() {
@@ -240,24 +234,10 @@
         return false;
     }
 
-    /**
-     * Set a session cookie so that subsequent GET requests can be pinned to the same server
-     * as the one used to generate the TimeSurface with the ID in use.
-    */
-    function setCookie() {
-      // generate a UUID: http://stackoverflow.com/a/2117523
-      var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-          var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-          return v.toString(16);
-      });
-      document.cookie = "transitanalyst=" + uuid + "; domain=transitanalyst.com; path=/";
-    }
-
-    setCookie();
-
     var map = L.map('map').setView(philly, 12);
 
     L.tileLayer(basemapUrl, {
+      minZoom: 9,
       maxZoom: 18,
       attribution: 'Maps © Thunderforest, Data © OpenStreetMap contributors'
     }).addTo(map);
@@ -276,40 +256,43 @@
     });
     map.addControl(new LegendControl());
 
+    var isochroneShowing = false;
     var blockTileLayer = null;
     var gridLayer = null;
+    var gridLoaded = null;
     var highlightedPolygon = null;
-    var lastHoveredBlockData = null;
     var clickedBlockData = null;
+    var currentLocation = philly;
     var clickedPolygon = L.geoJson([], {style: {color: '#ff3300'}}).addTo(map);
 
     var geocoder = L.Control.geocoder({
         position: "topleft",
     }).addTo(map);
 
-    function moveHighlightedBlock(newPoint) {
-      if (gridLayer) {
-        // Get the object data and call the click event handler,
-        // which will highlight the block group for that lat/lng
-        var object = gridLayer._objectForEvent({latlng: newPoint});
-        if (object.data) {
-          lastHoveredBlockData = object.data;
-          handleHighlightedClick({latlng: newPoint});
-        }
-      }
-    }
-
     geocoder.markGeocode = function(result) {
         map.setView(result.center, 14);
-        moveHighlightedBlock(result.center);
-        otpaLayer.setLocation(result.center);
+        handleHighlightedClick({latlng: result.center});
     };
 
     function handleHighlightedClick(e) {
-      clickedBlockData = lastHoveredBlockData;
-      clickedPolygon.clearLayers();
-      clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
-      updateBlockInfo();
+      if (gridLoaded) {
+        gridLoaded.done(function() {
+          // Get the object data and call the click event handler,
+          // which will highlight the block group for that lat/lng
+          var object = gridLayer._objectForEvent(e);
+          if (object.data) {
+            clickedBlockData = object.data;
+            clickedPolygon.clearLayers();
+            clickedPolygon.addData(JSON.parse(clickedBlockData.geojson));
+            updateBlockInfo();
+            var center = clickedPolygon.getBounds().getCenter();
+            currentLocation = center;
+          } else {
+            // If there is no block, move the location back to the last spot
+            otpaLayer.setLocation(currentLocation);
+          }
+        });
+      }
     }
 
     function updateBlockTiles(pointset) {
@@ -317,7 +300,7 @@
       if (blockTileLayer != null) {
         map.removeLayer(blockTileLayer);
       }
-      blockTileLayer = L.tileLayer(blockTileUrl);
+      blockTileLayer = L.tileLayer(blockTileUrl, {maxZoom: 15, minZoom: 9});
       map.addLayer(blockTileLayer);
 
       if (gridLayer != null) {
@@ -332,22 +315,47 @@
 
       highlightedPolygon.on('click', function(e) {
         handleHighlightedClick(e);
-        otpaLayer.setLocation(e.latlng);
       });
 
-      gridLayer = new L.UtfGrid(blockTileBaseUrl + pointset + '/{z}/{x}/{y}.grid.json', {useJsonP: false});
+      gridLayer = new L.UtfGrid(blockTileBaseUrl + pointset + '-json/{z}/{x}/{y}.json',
+                                {useJsonP: false});
       gridLayer.on('mouseover', function(e) {
-        lastHoveredBlockData = e.data;
         var geojson = JSON.parse(e.data.geojson);
         highlightedPolygon.clearLayers();
         highlightedPolygon.addData(geojson);
         highlightedPolygon.bringToBack();
       });
       gridLayer.on('click', function(e) {
-        otpaLayer.setLocation(e.latlng);
-        moveHighlightedBlock(e.latlng);
+        handleHighlightedClick({latlng: e.latlng});
       });
       map.addLayer(gridLayer);
+
+      function resetDeferred() {
+        gridLoaded = $.Deferred();
+        setTimeout(function() {
+          // If there are no requests queued, assume we already loaded all the grid tiles
+          // This can happen even after UI change due to caching
+          if (gridLayer._request_queue.length === 0) {
+            gridLoaded.resolve();
+          }
+        }, 1);
+      }
+
+      // When the map is moved or zoomed, reset the deferred object
+      map.on('movestart', resetDeferred);
+      map.on('viewreset', resetDeferred);
+      map.on('zoomstart', resetDeferred);
+      resetDeferred();
+      gridLayer.on('load', function() {
+        gridLoaded.resolve();
+      });
+
+      // this function is only called on pointset change;
+      // handle that change here when ready
+      gridLoaded.then(function() {
+        otpaLayer.setPointset(pointset);
+        updateBlockInfo();
+      });
     }
 
     function updateBlockInfo() {
@@ -355,6 +363,8 @@
         var data = [];
         var bools = [];
         var center = clickedPolygon.getBounds().getCenter();
+
+        otpaLayer.setLocation(center, clickedBlockData.geoid10, isochroneShowing);
 
         _.each(dataLabels, function(item) {
           var itemValue = clickedBlockData[item[0]];
@@ -384,9 +394,6 @@
         }));
       }
     }
-
-    updateBlockTiles(pointset);
-
 
     // The range input event is broken on IE <= 11, but the change event is *also* broken in that it behaves like
     // input is supposed to, so we can use change on IE and input for all the other browsers
@@ -426,10 +433,8 @@
 
     d3.select('#pointsets').on("change", function() {
       pointset = d3.event.target.value;
-      otpaLayer.setPointset(pointset);
       update(indicators, range.value * 60);
       updateBlockTiles(pointset);
-      updateBlockInfo();
     });
 
     d3.select('#indicators').on("change", function() {
@@ -441,7 +446,6 @@
     var infoTemplate = _.template($("#info-template").html());
     var blockTemplate = _.template($("#block-template").html());
 
-    // // TODO: make sure order of on() and addTo() does not matter
     var otpaLayer = L.otpaLayer(endpoint, {
         cutoffMinutes: range.max,
         isochroneMinutes: range.value,
@@ -485,10 +489,9 @@
           // make sure initally displayed selection matches start value
           d3.select('#pointsets').property('value', pointset);
       }).on('movedlocation', function(pt) {
-          moveHighlightedBlock(pt);
+          handleHighlightedClick({latlng: pt});
       }).addTo(map);
 
-    var isochroneShowing = false;
     $('#block-info').on('click', '#toggle-travelshed', function(e) {
       e.preventDefault();
       if (!isochroneShowing) {
@@ -521,6 +524,9 @@
           .data([{seconds: seconds, attributes: attributes}])
           .call(otpaGraph);
    }
+
+   // initialize
+   updateBlockTiles(pointset);
 
   </script>
 </body>
