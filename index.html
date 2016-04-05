@@ -496,8 +496,6 @@
       e.preventDefault();
       if (!isochroneShowing) {
         otpaLayer.showIsochrone(true);
-        map.removeLayer(gridLayer);
-        highlightedPolygon.clearLayers();
         $('#isochrone-details').show();
         $('#toggle-travelshed').text('Hide Travelshed');
       } else {
