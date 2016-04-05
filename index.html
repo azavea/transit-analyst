@@ -234,7 +234,7 @@
         return false;
     }
 
-    var map = L.map('map').setView(philly, 12);
+    var map = L.map('map', {maxZoom: 15, minZoom: 9}).setView(philly, 12);
 
     L.tileLayer(basemapUrl, {
       minZoom: 9,
