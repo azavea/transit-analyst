@@ -142,6 +142,10 @@ display: none;
     margin: 5px;
 }
 
+ul {
+  list-style-type: none;
+}
+
 #access-list {
     padding-left: 30px;
     margin-top: 18px;
@@ -151,7 +155,7 @@ display: none;
 }
 #access-list li div {
     padding-left: 0;
-    margin-top: -18px;
+    margin-top: -8px;
 }
 #access-list li div:nth-child(2) {
     text-align: right;
